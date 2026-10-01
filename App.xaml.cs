@@ -42,6 +42,7 @@ public partial class App : Application
         services.AddSingleton<IImageTransformer, OriginalTransformer>();
         services.AddSingleton<IImageTransformer, BlackWhiteTransformer>();
         services.AddSingleton<IImageTransformer, NegativeAfterimageTransformer>();
+        services.AddSingleton<IImageTransformer, PositiveAfterimageTransformer>();
         services.AddSingleton<IImageTransformer, FloydSteinbergDitheringTransformer>();
         services.AddSingleton<IImageTransformer, BayerDitheringTransformer>();
         services.AddSingleton<IImageTransformer, HalftoneTransformer>();

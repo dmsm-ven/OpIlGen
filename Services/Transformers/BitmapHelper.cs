@@ -52,6 +52,25 @@ internal static class BitmapHelper
         return lum;
     }
 
+    /// <summary>Значение яркости (0..255), ниже которого лежит доля p (0..1) пикселей.</summary>
+    public static float Percentile(float[] values, double p)
+    {
+        var histogram = new int[256];
+        foreach (var v in values)
+        {
+            histogram[Math.Clamp((int)v, 0, 255)]++;
+        }
+
+        long target = (long)(values.Length * p);
+        long accumulated = 0;
+        for (int i = 0; i < histogram.Length; i++)
+        {
+            accumulated += histogram[i];
+            if (accumulated >= target) return i;
+        }
+        return 255;
+    }
+
     public static void SetGray(byte[] pixels, int pixelIndex, byte value)
     {
         int i = pixelIndex * 4;
