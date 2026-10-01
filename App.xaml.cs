@@ -1,0 +1,47 @@
+using Microsoft.Extensions.DependencyInjection;
+using OpIlGen.Services;
+using OpIlGen.Services.Transformers;
+using OpIlGen.ViewModels;
+using OpIlGen.Views;
+using System.Windows;
+
+namespace OpIlGen;
+
+public partial class App : Application
+{
+    private ServiceProvider? _serviceProvider;
+
+    protected override void OnStartup(StartupEventArgs e)
+    {
+        base.OnStartup(e);
+
+        var services = new ServiceCollection();
+        ConfigureServices(services);
+        _serviceProvider = services.BuildServiceProvider();
+
+        // Главное окно создаётся через DI
+        var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
+        mainWindow.Show();
+    }
+
+    private static void ConfigureServices(IServiceCollection services)
+    {
+        // Сервисы
+        services.AddSingleton<IFileDialogService, FileDialogService>();
+        services.AddSingleton<IImageService, ImageService>();
+
+        // Преобразователи изображений. Чтобы добавить новую иллюзию -
+        // создайте класс, реализующий IImageTransformer, и зарегистрируйте его здесь.
+        services.AddSingleton<IImageTransformer, BlackWhiteTransformer>();
+
+        // ViewModel и окна
+        services.AddSingleton<MainViewModel>();
+        services.AddSingleton<MainWindow>();
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        _serviceProvider?.Dispose();
+        base.OnExit(e);
+    }
+}
