@@ -5,11 +5,6 @@
         <ResourceDictionary>
             <!-- Кисти темы (Themes/*.xaml) добавляются в MergedDictionaries из ThemeService -->
 
-            <Style TargetType="Window">
-                <Setter Property="Background" Value="{DynamicResource WindowBackgroundBrush}" />
-                <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
-            </Style>
-
             <Style TargetType="GroupBox">
                 <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
                 <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
