@@ -9,16 +9,21 @@ namespace OpIlGen.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
+    private const string AppName = "OpIlGen";
+
     private readonly IFileDialogService _fileDialog;
     private readonly IImageService _imageService;
+    private readonly IFullScreenService _fullScreen;
 
     public MainViewModel(
         IFileDialogService fileDialog,
         IImageService imageService,
+        IFullScreenService fullScreen,
         IEnumerable<IImageTransformer> transformers)
     {
         _fileDialog = fileDialog;
         _imageService = imageService;
+        _fullScreen = fullScreen;
 
         Transformers = new ObservableCollection<IImageTransformer>(transformers);
         SelectedTransformer = Transformers.FirstOrDefault();
@@ -33,14 +38,23 @@ public partial class MainViewModel : ObservableObject
     private IImageTransformer? _selectedTransformer;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(OpenFullScreenCommand))]
     private BitmapSource? _resultImage;
 
+    /// <summary>Разрешение результата, например "1920x1080". Пусто, пока изображения нет.</summary>
     [ObservableProperty]
-    private string _status = "Выберите изображение (.jpg / .png)";
+    private string _imageResolution = string.Empty;
+
+    /// <summary>Статус выводится в заголовок окна.</summary>
+    [ObservableProperty]
+    private string _windowTitle = $"{AppName} - выберите изображение (.jpg / .png)";
 
     partial void OnSourcePathChanged(string? value) => ApplyTransform();
 
     partial void OnSelectedTransformerChanged(IImageTransformer? value) => ApplyTransform();
+
+    partial void OnResultImageChanged(BitmapSource? value) =>
+        ImageResolution = value is null ? string.Empty : $"{value.PixelWidth}x{value.PixelHeight}";
 
     [RelayCommand]
     private void SelectFile()
@@ -51,6 +65,17 @@ public partial class MainViewModel : ObservableObject
             SourcePath = path;
         }
     }
+
+    [RelayCommand(CanExecute = nameof(HasResult))]
+    private void OpenFullScreen()
+    {
+        if (ResultImage is not null)
+        {
+            _fullScreen.Show(ResultImage);
+        }
+    }
+
+    private bool HasResult() => ResultImage is not null;
 
     private void ApplyTransform()
     {
@@ -66,11 +91,11 @@ public partial class MainViewModel : ObservableObject
             var savedPath = _imageService.SaveResult(result, SourcePath, SelectedTransformer.Key);
 
             ResultImage = result;
-            Status = $"Исходный файл: {Path.GetFileName(SourcePath)} | Результат сохранён: {savedPath}";
+            WindowTitle = $"{AppName} - {Path.GetFileName(SourcePath)} -> {savedPath}";
         }
         catch (Exception ex)
         {
-            Status = $"Ошибка: {ex.Message}";
+            WindowTitle = $"{AppName} - ошибка: {ex.Message}";
         }
     }
 }

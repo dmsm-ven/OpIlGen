@@ -29,6 +29,7 @@ public partial class App : Application
         // Сервисы
         services.AddSingleton<IFileDialogService, FileDialogService>();
         services.AddSingleton<IImageService, ImageService>();
+        services.AddSingleton<IFullScreenService, FullScreenService>();
 
         // Преобразователи изображений. Чтобы добавить новую иллюзию -
         // создайте класс, реализующий IImageTransformer, и зарегистрируйте его здесь.
