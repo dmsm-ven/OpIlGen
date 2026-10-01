@@ -16,6 +16,7 @@ public partial class MainViewModel : ObservableObject
     private readonly IFullScreenService _fullScreen;
     private readonly IShellService _shell;
     private readonly IThemeService _themeService;
+    private readonly ISettingsService _settings;
 
     public MainViewModel(
         IFileDialogService fileDialog,
@@ -23,6 +24,7 @@ public partial class MainViewModel : ObservableObject
         IFullScreenService fullScreen,
         IShellService shell,
         IThemeService themeService,
+        ISettingsService settings,
         IEnumerable<IImageTransformer> transformers)
     {
         _fileDialog = fileDialog;
@@ -30,6 +32,7 @@ public partial class MainViewModel : ObservableObject
         _fullScreen = fullScreen;
         _shell = shell;
         _themeService = themeService;
+        _settings = settings;
         IsDarkTheme = themeService.Current == AppTheme.Dark;
 
         Transformers = new ObservableCollection<IImageTransformer>(transformers);
@@ -104,17 +107,18 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void SetLightTheme()
-    {
-        _themeService.Apply(AppTheme.Light);
-        IsDarkTheme = false;
-    }
+    private void SetLightTheme() => ChangeTheme(AppTheme.Light);
 
     [RelayCommand]
-    private void SetDarkTheme()
+    private void SetDarkTheme() => ChangeTheme(AppTheme.Dark);
+
+    private void ChangeTheme(AppTheme theme)
     {
-        _themeService.Apply(AppTheme.Dark);
-        IsDarkTheme = true;
+        _themeService.Apply(theme);
+        IsDarkTheme = theme == AppTheme.Dark;
+
+        _settings.Current.Theme = theme;
+        _settings.Save();
     }
 
     private void ApplyTransform()

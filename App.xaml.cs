@@ -19,8 +19,9 @@ public partial class App : Application
         ConfigureServices(services);
         _serviceProvider = services.BuildServiceProvider();
 
-        // Тема применяется до создания окна
-        _serviceProvider.GetRequiredService<IThemeService>().Apply(AppTheme.Light);
+        // Сохранённая тема применяется до создания окна
+        var settings = _serviceProvider.GetRequiredService<ISettingsService>();
+        _serviceProvider.GetRequiredService<IThemeService>().Apply(settings.Current.Theme);
 
         // Главное окно создаётся через DI
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
@@ -35,6 +36,7 @@ public partial class App : Application
         services.AddSingleton<IFullScreenService, FullScreenService>();
         services.AddSingleton<IShellService, ShellService>();
         services.AddSingleton<IThemeService, ThemeService>();
+        services.AddSingleton<ISettingsService, SettingsService>();
 
         // Преобразователи изображений. Чтобы добавить новую иллюзию -
         // создайте класс, реализующий IImageTransformer, и зарегистрируйте его здесь.
