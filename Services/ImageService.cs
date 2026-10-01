@@ -5,7 +5,7 @@ namespace OpIlGen.Services;
 
 public sealed class ImageService : IImageService
 {
-    private static string OutputDirectory => Path.Combine(AppContext.BaseDirectory, "Output");
+    public string OutputDirectory => Path.Combine(AppContext.BaseDirectory, "Output");
 
     public BitmapSource Load(string path)
     {

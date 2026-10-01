@@ -14,16 +14,19 @@ public partial class MainViewModel : ObservableObject
     private readonly IFileDialogService _fileDialog;
     private readonly IImageService _imageService;
     private readonly IFullScreenService _fullScreen;
+    private readonly IShellService _shell;
 
     public MainViewModel(
         IFileDialogService fileDialog,
         IImageService imageService,
         IFullScreenService fullScreen,
+        IShellService shell,
         IEnumerable<IImageTransformer> transformers)
     {
         _fileDialog = fileDialog;
         _imageService = imageService;
         _fullScreen = fullScreen;
+        _shell = shell;
 
         Transformers = new ObservableCollection<IImageTransformer>(transformers);
         SelectedTransformer = Transformers.FirstOrDefault();
@@ -78,6 +81,19 @@ public partial class MainViewModel : ObservableObject
     }
 
     private bool CanShowFullScreen() => ResultImage is not null;
+
+    [RelayCommand]
+    private void OpenOutputFolder()
+    {
+        try
+        {
+            _shell.OpenFolder(_imageService.OutputDirectory);
+        }
+        catch (Exception ex)
+        {
+            Title = $"{AppName} - не удалось открыть папку: {ex.Message}";
+        }
+    }
 
     private void ApplyTransform()
     {

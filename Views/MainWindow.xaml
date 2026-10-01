@@ -7,13 +7,43 @@
         WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
-        <!-- Кнопка-иконка (глифы Segoe MDL2 Assets) -->
+        <!-- Кнопка-иконка: прозрачная, со скруглёнными углами (глифы Segoe MDL2 Assets) -->
         <Style x:Key="IconButton" TargetType="Button">
             <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
-            <Setter Property="FontSize" Value="20" />
-            <Setter Property="Width" Value="44" />
-            <Setter Property="Height" Value="44" />
-            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Width" Value="26" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#22000000" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#33000000" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#44000000" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.35" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
 
@@ -25,22 +55,26 @@
         </Grid.RowDefinitions>
 
         <!-- Панель кнопок -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
             <Button Style="{StaticResource IconButton}"
-                    Content="&#xE838;"
+                    Content="&#xE8E5;"
                     ToolTip="Выбрать файл (.jpg / .png)"
                     Command="{Binding SelectFileCommand}" />
             <Button Style="{StaticResource IconButton}"
                     Content="&#xE740;"
                     ToolTip="Во весь экран"
                     Command="{Binding ShowFullScreenCommand}" />
+            <Button Style="{StaticResource IconButton}"
+                    Content="&#xE838;"
+                    ToolTip="Открыть папку с изображениями"
+                    Command="{Binding OpenOutputFolderCommand}" />
         </StackPanel>
 
-        <!-- Холст (5*) и список преобразователей (3*) -->
+        <!-- Холст (5*) и список преобразователей (1.5*) -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="5*" />
-                <ColumnDefinition Width="3*" />
+                <ColumnDefinition Width="1.5*" />
             </Grid.ColumnDefinitions>
 
             <Border Grid.Column="0" Margin="0,0,12,0"
@@ -69,16 +103,22 @@
                 </Grid>
             </Border>
 
-            <GroupBox Grid.Column="1" Header="Преобразования" Padding="4">
+            <GroupBox Grid.Column="1" Header="Преобразования" Padding="2">
                 <ListBox ItemsSource="{Binding Transformers}"
                          SelectedItem="{Binding SelectedTransformer}"
-                         DisplayMemberPath="Name"
-                         BorderThickness="0">
+                         FontSize="11"
+                         BorderThickness="0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListBox.ItemContainerStyle>
                         <Style TargetType="ListBoxItem">
-                            <Setter Property="Padding" Value="8,6" />
+                            <Setter Property="Padding" Value="6,4" />
                         </Style>
                     </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
                 </ListBox>
             </GroupBox>
         </Grid>
