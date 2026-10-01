@@ -11,5 +11,8 @@ public interface IImageTransformer
     /// <summary>Короткий идентификатор, используется в имени выходного файла.</summary>
     string Key { get; }
 
+    /// <summary>Короткое описание иллюзии и подсказка, как на неё смотреть.</summary>
+    string Description { get; }
+
     BitmapSource Transform(BitmapSource source);
 }

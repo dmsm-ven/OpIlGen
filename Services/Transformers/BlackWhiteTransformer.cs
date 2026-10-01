@@ -10,6 +10,7 @@ public sealed class BlackWhiteTransformer : IImageTransformer
 
     public string Name => "Чёрно-белое (2 цвета)";
     public string Key => "black_white";
+    public string Description => "Жёсткий порог яркости: каждый пиксель становится либо чёрным, либо белым.";
 
     public BitmapSource Transform(BitmapSource source)
     {

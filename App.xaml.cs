@@ -33,6 +33,13 @@ public partial class App : Application
         // Преобразователи изображений. Чтобы добавить новую иллюзию -
         // создайте класс, реализующий IImageTransformer, и зарегистрируйте его здесь.
         services.AddSingleton<IImageTransformer, BlackWhiteTransformer>();
+        services.AddSingleton<IImageTransformer, NegativeAfterimageTransformer>();
+        services.AddSingleton<IImageTransformer, FloydSteinbergDitheringTransformer>();
+        services.AddSingleton<IImageTransformer, BayerDitheringTransformer>();
+        services.AddSingleton<IImageTransformer, HalftoneTransformer>();
+        services.AddSingleton<IImageTransformer, LincolnTransformer>();
+        services.AddSingleton<IImageTransformer, HermannGridTransformer>();
+        services.AddSingleton<IImageTransformer, CafeWallTransformer>();
 
         // ViewModel и окна
         services.AddSingleton<MainViewModel>();
