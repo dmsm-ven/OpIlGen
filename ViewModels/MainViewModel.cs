@@ -15,18 +15,22 @@ public partial class MainViewModel : ObservableObject
     private readonly IImageService _imageService;
     private readonly IFullScreenService _fullScreen;
     private readonly IShellService _shell;
+    private readonly IThemeService _themeService;
 
     public MainViewModel(
         IFileDialogService fileDialog,
         IImageService imageService,
         IFullScreenService fullScreen,
         IShellService shell,
+        IThemeService themeService,
         IEnumerable<IImageTransformer> transformers)
     {
         _fileDialog = fileDialog;
         _imageService = imageService;
         _fullScreen = fullScreen;
         _shell = shell;
+        _themeService = themeService;
+        IsDarkTheme = themeService.Current == AppTheme.Dark;
 
         Transformers = new ObservableCollection<IImageTransformer>(transformers);
         SelectedTransformer = Transformers.FirstOrDefault();
@@ -47,6 +51,10 @@ public partial class MainViewModel : ObservableObject
     /// <summary>Разрешение результата, например "1920×1080". Выводится поверх холста.</summary>
     [ObservableProperty]
     private string _resolutionText = string.Empty;
+
+    /// <summary>Выбрана ли тёмная тема (для подсветки кнопки темы).</summary>
+    [ObservableProperty]
+    private bool _isDarkTheme;
 
     /// <summary>Заголовок окна, он же строка статуса.</summary>
     [ObservableProperty]
@@ -93,6 +101,20 @@ public partial class MainViewModel : ObservableObject
         {
             Title = $"{AppName} - не удалось открыть папку: {ex.Message}";
         }
+    }
+
+    [RelayCommand]
+    private void SetLightTheme()
+    {
+        _themeService.Apply(AppTheme.Light);
+        IsDarkTheme = false;
+    }
+
+    [RelayCommand]
+    private void SetDarkTheme()
+    {
+        _themeService.Apply(AppTheme.Dark);
+        IsDarkTheme = true;
     }
 
     private void ApplyTransform()

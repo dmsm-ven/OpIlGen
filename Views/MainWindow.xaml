@@ -14,6 +14,7 @@
             <Setter Property="Width" Value="26" />
             <Setter Property="Height" Value="26" />
             <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderBrush" Value="Transparent" />
             <Setter Property="BorderThickness" Value="1" />
@@ -31,11 +32,11 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#22000000" />
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="#33000000" />
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HoverBrush}" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#44000000" />
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource PressedBrush}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="Bd" Property="Opacity" Value="0.35" />
@@ -44,6 +45,24 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+        </Style>
+
+        <!-- Кнопки тем: активная тема подсвечена -->
+        <Style x:Key="LightThemeButton" TargetType="Button" BasedOn="{StaticResource IconButton}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme}" Value="False">
+                    <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="DarkThemeButton" TargetType="Button" BasedOn="{StaticResource IconButton}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
     </Window.Resources>
 
@@ -54,21 +73,35 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Панель кнопок -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-            <Button Style="{StaticResource IconButton}"
-                    Content="&#xE8E5;"
-                    ToolTip="Выбрать файл (.jpg / .png)"
-                    Command="{Binding SelectFileCommand}" />
-            <Button Style="{StaticResource IconButton}"
-                    Content="&#xE740;"
-                    ToolTip="Во весь экран"
-                    Command="{Binding ShowFullScreenCommand}" />
-            <Button Style="{StaticResource IconButton}"
-                    Content="&#xE838;"
-                    ToolTip="Открыть папку с изображениями"
-                    Command="{Binding OpenOutputFolderCommand}" />
-        </StackPanel>
+        <!-- Верхняя панель: слева действия, справа переключение темы -->
+        <DockPanel Grid.Row="0" Margin="0,0,0,10" LastChildFill="False">
+            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                <Button Style="{StaticResource IconButton}"
+                        Content="&#xE8E5;"
+                        ToolTip="Выбрать файл (.jpg / .png)"
+                        Command="{Binding SelectFileCommand}" />
+                <Button Style="{StaticResource IconButton}"
+                        Content="&#xE740;"
+                        ToolTip="Во весь экран"
+                        Command="{Binding ShowFullScreenCommand}" />
+                <Button Style="{StaticResource IconButton}"
+                        Content="&#xE838;"
+                        ToolTip="Открыть папку с изображениями"
+                        Command="{Binding OpenOutputFolderCommand}" />
+            </StackPanel>
+
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button Style="{StaticResource LightThemeButton}"
+                        Content="&#xE706;"
+                        ToolTip="Светлая тема"
+                        Command="{Binding SetLightThemeCommand}" />
+                <Button Style="{StaticResource DarkThemeButton}"
+                        Content="&#xE708;"
+                        Margin="0"
+                        ToolTip="Тёмная тема"
+                        Command="{Binding SetDarkThemeCommand}" />
+            </StackPanel>
+        </DockPanel>
 
         <!-- Холст (5*) и список преобразователей (1.5*) -->
         <Grid Grid.Row="1">
@@ -77,8 +110,10 @@
                 <ColumnDefinition Width="1.5*" />
             </Grid.ColumnDefinitions>
 
+            <!-- Фон холста всегда тёмный: нейтральный фон для просмотра изображения -->
             <Border Grid.Column="0" Margin="0,0,12,0"
-                    BorderBrush="Gray" BorderThickness="1" Background="#FF202020">
+                    BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1"
+                    Background="#FF202020">
                 <Grid>
                     <Canvas x:Name="ResultCanvas" ClipToBounds="True">
                         <Image Source="{Binding ResultImage}"
@@ -107,13 +142,7 @@
                 <ListBox ItemsSource="{Binding Transformers}"
                          SelectedItem="{Binding SelectedTransformer}"
                          FontSize="11"
-                         BorderThickness="0"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                    <ListBox.ItemContainerStyle>
-                        <Style TargetType="ListBoxItem">
-                            <Setter Property="Padding" Value="6,4" />
-                        </Style>
-                    </ListBox.ItemContainerStyle>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
@@ -129,6 +158,6 @@
                    MinHeight="40"
                    Margin="0,8,0,0"
                    TextWrapping="Wrap"
-                   Foreground="DimGray" />
+                   Foreground="{DynamicResource SecondaryTextBrush}" />
     </Grid>
 </Window>
