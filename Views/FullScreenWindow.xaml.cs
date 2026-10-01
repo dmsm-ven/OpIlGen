@@ -9,12 +9,11 @@ public partial class FullScreenWindow : Window
     public FullScreenWindow(BitmapSource image)
     {
         InitializeComponent();
-        Preview.Source = image;
-        ResolutionText.Text = $"{image.PixelWidth}x{image.PixelHeight}";
+        Picture.Source = image;
+        ResolutionText.Text = $"{image.PixelWidth}×{image.PixelHeight}";
     }
 
-    // Esc или клик мышью - закрыть
-    private void OnKeyDown(object sender, KeyEventArgs e)
+    private void Window_KeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape)
         {
@@ -22,5 +21,5 @@ public partial class FullScreenWindow : Window
         }
     }
 
-    private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) => Close();
+    private void Window_MouseDoubleClick(object sender, MouseButtonEventArgs e) => Close();
 }

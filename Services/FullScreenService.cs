@@ -12,6 +12,6 @@ public sealed class FullScreenService : IFullScreenService
         {
             Owner = Application.Current.MainWindow
         };
-        window.ShowDialog();
+        window.Show();
     }
 }

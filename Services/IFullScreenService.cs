@@ -4,6 +4,6 @@ namespace OpIlGen.Services;
 
 public interface IFullScreenService
 {
-    /// <summary>Показывает изображение в полноэкранном окне.</summary>
+    /// <summary>Показывает изображение в окне на весь экран.</summary>
     void Show(BitmapSource image);
 }
