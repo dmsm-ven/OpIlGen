@@ -24,7 +24,7 @@ public sealed class BayerDitheringTransformer : PixelTransformerBase
         "Упорядоченный дизеринг: яркость сравнивается с повторяющейся матрицей порогов. " +
         "Получается характерная регулярная «сетчатая» текстура, в которой тоже видны полутона.";
 
-    protected override byte[] Process(byte[] pixels, int width, int height)
+    protected override byte[] Process(byte[] pixels, int width, int height, TransformerVariable[]? customVariables)
     {
         var lum = BitmapHelper.ToLuminance(pixels);
         var result = new byte[pixels.Length];

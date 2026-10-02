@@ -16,7 +16,9 @@ public sealed class BlackWhiteTransformer : IImageTransformer
     public string Key => "black_white";
     public string Description => "Жёсткий порог яркости: каждый пиксель становится либо чёрным, либо белым.";
 
-    public BitmapSource Transform(BitmapSource source)
+    public TransformerVariable[] AvailableCustomVariables => Array.Empty<TransformerVariable>();
+
+    public BitmapSource Transform(BitmapSource source, TransformerVariable[]? customVariables = null)
     {
         var bgra = new FormatConvertedBitmap(source, PixelFormats.Bgra32, null, 0);
 

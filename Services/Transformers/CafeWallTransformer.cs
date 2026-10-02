@@ -35,7 +35,7 @@ public sealed class CafeWallTransformer : PixelTransformerBase
         "Ряды светлых и тёмных плиток, сдвинутых друг относительно друга, с серыми швами. " +
         "Хотя все швы строго горизонтальны, кажется, что они наклонены.";
 
-    protected override byte[] Process(byte[] pixels, int width, int height)
+    protected override byte[] Process(byte[] pixels, int width, int height, TransformerVariable[]? customVariables)
     {
         var result = new byte[pixels.Length];
         int tile = Math.Max(MinTileSize, Math.Min(width, height) / TileSizeDivisor);

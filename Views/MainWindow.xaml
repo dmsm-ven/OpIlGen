@@ -9,6 +9,8 @@
         Foreground="{DynamicResource TextBrush}">
 
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
         <!-- Кнопка-иконка: прозрачная, со скруглёнными углами (глифы Segoe MDL2 Assets) -->
         <Style x:Key="IconButton" TargetType="Button">
             <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
@@ -140,18 +142,57 @@
                 </Grid>
             </Border>
 
-            <GroupBox Grid.Column="1" Header="Преобразования" Padding="2">
-                <ListBox ItemsSource="{Binding Transformers}"
-                         SelectedItem="{Binding SelectedTransformer}"
-                         FontSize="11"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </GroupBox>
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <GroupBox Grid.Row="0" Header="Преобразования" Padding="2">
+                    <ListBox ItemsSource="{Binding Transformers}"
+                             SelectedItem="{Binding SelectedTransformer}"
+                             FontSize="11"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </GroupBox>
+
+                <!-- Настраиваемые параметры выбранного преобразователя -->
+                <GroupBox Grid.Row="1" Header="Параметры" Margin="0,8,0,0" Padding="6"
+                          Visibility="{Binding HasCustomVariables, Converter={StaticResource BoolToVisibility}}">
+                    <ItemsControl ItemsSource="{Binding CustomVariables}" FontSize="11">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,0,0,8">
+                                    <DockPanel>
+                                        <TextBlock DockPanel.Dock="Right"
+                                                   FontWeight="SemiBold"
+                                                   Text="{Binding Value, ElementName=ValueSlider, StringFormat={}{0:0.##}}" />
+                                        <TextBlock Text="{Binding Name}" TextWrapping="Wrap" Margin="0,0,8,0" />
+                                    </DockPanel>
+
+                                    <!-- Minimum/Maximum должны идти раньше Value, иначе значение будет обрезано до 0..10 -->
+                                    <Slider x:Name="ValueSlider"
+                                            Minimum="{Binding MinValue}"
+                                            Maximum="{Binding MaxValue}"
+                                            TickFrequency="{Binding Step}"
+                                            IsSnapToTickEnabled="True"
+                                            Value="{Binding Value, Delay=150}" />
+
+                                    <TextBlock Text="{Binding Description}"
+                                               TextWrapping="Wrap"
+                                               FontSize="10"
+                                               Foreground="{DynamicResource SecondaryTextBrush}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </GroupBox>
+            </Grid>
         </Grid>
 
         <!-- Описание выбранной иллюзии -->

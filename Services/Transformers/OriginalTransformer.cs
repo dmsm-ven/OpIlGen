@@ -9,5 +9,7 @@ public sealed class OriginalTransformer : IImageTransformer
     public string Key => "original";
     public string Description => "Исходное изображение без каких-либо преобразований.";
 
-    public BitmapSource Transform(BitmapSource source) => source;
+    public TransformerVariable[] AvailableCustomVariables => Array.Empty<TransformerVariable>();
+
+    public BitmapSource Transform(BitmapSource source, TransformerVariable[]? customVariables = null) => source;
 }

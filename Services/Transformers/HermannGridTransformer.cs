@@ -23,7 +23,7 @@ public sealed class HermannGridTransformer : PixelTransformerBase
         "Затемнённое изображение с белой решёткой. На пересечениях белых линий, куда вы не смотрите " +
         "прямо, появляются призрачные тёмные пятна.";
 
-    protected override byte[] Process(byte[] pixels, int width, int height)
+    protected override byte[] Process(byte[] pixels, int width, int height, TransformerVariable[]? customVariables)
     {
         var result = new byte[pixels.Length];
         int cell = Math.Max(MinCellSize, Math.Min(width, height) / CellSizeDivisor);

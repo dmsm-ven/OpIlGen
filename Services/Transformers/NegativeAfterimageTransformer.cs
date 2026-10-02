@@ -22,7 +22,7 @@ public sealed class NegativeAfterimageTransformer : PixelTransformerBase
         "Смотрите на красную точку в центре 20-30 секунд, не двигая глаз, затем переведите взгляд " +
         "на белую стену или пустой лист: вы увидите исходное изображение в нормальных цветах.";
 
-    protected override byte[] Process(byte[] pixels, int width, int height)
+    protected override byte[] Process(byte[] pixels, int width, int height, TransformerVariable[]? customVariables)
     {
         var result = new byte[pixels.Length];
 

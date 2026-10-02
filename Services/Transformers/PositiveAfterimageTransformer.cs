@@ -35,7 +35,7 @@ public sealed class PositiveAfterimageTransformer : PixelTransformerBase
         "не двигая глаз. Затем закройте глаза и прикройте их ладонями: образ несколько секунд будет виден. " +
         "При дискомфорте прекратите.";
 
-    protected override byte[] Process(byte[] pixels, int width, int height)
+    protected override byte[] Process(byte[] pixels, int width, int height, TransformerVariable[]? customVariables)
     {
         var lum = BitmapHelper.ToLuminance(pixels);
         float low = BitmapHelper.Percentile(lum, LowPercentile);

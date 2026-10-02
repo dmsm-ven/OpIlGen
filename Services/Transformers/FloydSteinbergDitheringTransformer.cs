@@ -17,7 +17,7 @@ public sealed class FloydSteinbergDitheringTransformer : PixelTransformerBase
         "Только чёрный и белый цвета, но ошибка квантования распределяется по соседним пикселям, " +
         "поэтому глаз «видит» плавные полутона.";
 
-    protected override byte[] Process(byte[] pixels, int width, int height)
+    protected override byte[] Process(byte[] pixels, int width, int height, TransformerVariable[]? customVariables)
     {
         var lum = BitmapHelper.ToLuminance(pixels);
         var result = new byte[pixels.Length];

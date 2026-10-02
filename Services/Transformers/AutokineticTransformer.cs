@@ -31,7 +31,7 @@ public sealed class AutokineticTransformer : PixelTransformerBase
         "Параллельные линии, которые на границах тёмных фигур сужаются до острия. Края фигур могут казаться " +
         "пульсирующими или расползающимися. Лучше работает на контрастных силуэтах; эффект индивидуален.";
 
-    protected override byte[] Process(byte[] pixels, int width, int height)
+    protected override byte[] Process(byte[] pixels, int width, int height, TransformerVariable[]? customVariables)
     {
         var lum = BitmapHelper.ToLuminance(pixels);
         var darkness = ToStretchedDarkness(lum);

@@ -18,6 +18,9 @@ public partial class MainViewModel : ObservableObject
     private readonly IThemeService _themeService;
     private readonly ISettingsService _settings;
 
+    // Значения параметров запоминаются для каждого преобразователя при переключении между ними
+    private readonly Dictionary<string, TransformerVariableViewModel[]> _variableCache = new();
+
     public MainViewModel(
         IFileDialogService fileDialog,
         IImageService imageService,
@@ -47,6 +50,13 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private IImageTransformer? _selectedTransformer;
 
+    /// <summary>Настраиваемые параметры выбранного преобразователя (ползунки в UI).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCustomVariables))]
+    private IReadOnlyList<TransformerVariableViewModel> _customVariables = Array.Empty<TransformerVariableViewModel>();
+
+    public bool HasCustomVariables => CustomVariables.Count > 0;
+
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ShowFullScreenCommand))]
     private BitmapSource? _resultImage;
@@ -65,7 +75,11 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnSourcePathChanged(string? value) => ApplyTransform();
 
-    partial void OnSelectedTransformerChanged(IImageTransformer? value) => ApplyTransform();
+    partial void OnSelectedTransformerChanged(IImageTransformer? value)
+    {
+        CustomVariables = GetVariables(value);
+        ApplyTransform();
+    }
 
     partial void OnResultImageChanged(BitmapSource? value)
     {
@@ -121,6 +135,24 @@ public partial class MainViewModel : ObservableObject
         _settings.Save();
     }
 
+    private IReadOnlyList<TransformerVariableViewModel> GetVariables(IImageTransformer? transformer)
+    {
+        if (transformer is null)
+        {
+            return Array.Empty<TransformerVariableViewModel>();
+        }
+
+        if (!_variableCache.TryGetValue(transformer.Key, out var variables))
+        {
+            variables = transformer.AvailableCustomVariables
+                .Select(v => new TransformerVariableViewModel(v, ApplyTransform))
+                .ToArray();
+            _variableCache[transformer.Key] = variables;
+        }
+
+        return variables;
+    }
+
     private void ApplyTransform()
     {
         if (string.IsNullOrEmpty(SourcePath) || SelectedTransformer is null)
@@ -131,7 +163,8 @@ public partial class MainViewModel : ObservableObject
         try
         {
             var source = _imageService.Load(SourcePath);
-            var result = SelectedTransformer.Transform(source);
+            var variables = CustomVariables.Select(v => v.ToModel()).ToArray();
+            var result = SelectedTransformer.Transform(source, variables);
             var savedPath = _imageService.SaveResult(result, SourcePath, SelectedTransformer.Key);
 
             ResultImage = result;

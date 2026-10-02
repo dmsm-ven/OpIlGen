@@ -32,7 +32,7 @@ public sealed class HalftoneTransformer : PixelTransformerBase
         "Изображение из чёрных точек разного размера на сетке под углом 45° (как в газетах). " +
         "С расстояния точки сливаются в полутона.";
 
-    protected override byte[] Process(byte[] pixels, int width, int height)
+    protected override byte[] Process(byte[] pixels, int width, int height, TransformerVariable[]? customVariables)
     {
         var lum = BitmapHelper.ToLuminance(pixels);
         var result = new byte[pixels.Length];
