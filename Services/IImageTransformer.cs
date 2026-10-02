@@ -54,6 +54,19 @@ public class TransformerVariable
         get => _value ?? DefaultValue;
         set => _value = value;
     }
+
+    /// <summary>Копия параметра с другим текущим значением (описание и границы сохраняются).</summary>
+    public TransformerVariable WithValue(double value) => new()
+    {
+        Name = Name,
+        Key = Key,
+        Description = Description,
+        MinValue = MinValue,
+        DefaultValue = DefaultValue,
+        MaxValue = MaxValue,
+        Step = Step,
+        Value = value
+    };
 }
 
 public static class TransformerVariableExtensions

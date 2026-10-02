@@ -76,7 +76,6 @@
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="Focusable" Value="False" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -130,7 +129,6 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="14,4" />
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="Focusable" Value="False" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -182,4 +180,16 @@
                        Foreground="{DynamicResource SecondaryTextBrush}" />
         </StackPanel>
     </DataTemplate>
+
+    <!-- Поля ввода и переключатели: цвета темы (в таблице генератора GIF) -->
+    <Style TargetType="TextBox">
+        <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}" />
+    </Style>
+
+    <Style TargetType="RadioButton">
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+    </Style>
 </ResourceDictionary>

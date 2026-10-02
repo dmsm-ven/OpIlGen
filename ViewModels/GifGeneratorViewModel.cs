@@ -8,13 +8,20 @@ using System.Windows.Media.Imaging;
 
 namespace OpIlGen.ViewModels;
 
-/// <summary>Окно генератора GIF: серия кадров (контрольных точек) с параметрами преобразователя.</summary>
+/// <summary>
+/// Окно генератора GIF: таблица кадров (строка = кадр, столбец = параметр преобразователя),
+/// общие настройки задержки и перехода между кадрами.
+/// </summary>
 public partial class GifGeneratorViewModel : ObservableObject
 {
     private const double DefaultFrameDelayMs = 200;
 
-    /// <summary>Минимальное число кадров, чтобы получилась анимация.</summary>
+    /// <summary>Сколько промежуточных кадров добавляется на каждый переход по умолчанию.</summary>
+    private const double DefaultTransitionFrames = 5;
+
+    /// <summary>Минимальное число кадров, чтобы получилась анимация (для Fade хватит одного).</summary>
     private const int MinFrames = 2;
+    private const int MinFramesForFade = 1;
 
     /// <summary>Исходное изображение уменьшается, если его длинная сторона больше (быстрее и меньше файл).</summary>
     private const int MaxGifSide = 1024;
@@ -34,19 +41,71 @@ public partial class GifGeneratorViewModel : ObservableObject
         _transformer = transformer;
         _imageService = imageService;
         _gifService = gifService;
+
+        Frames.CollectionChanged += (_, _) => OnPropertyChanged(nameof(Summary));
     }
 
     public string SourceName => Path.GetFileName(_sourcePath);
 
     public string TransformerName => _transformer.Name;
 
-    /// <summary>У преобразователя нет параметров - все кадры получатся одинаковыми.</summary>
+    /// <summary>Столбцы таблицы: параметры преобразователя.</summary>
+    public IReadOnlyList<TransformerVariable> Columns => _transformer.AvailableCustomVariables;
+
+    /// <summary>У преобразователя нет параметров - кадры отличаются только яркостью в режиме Fade.</summary>
     public bool HasNoVariables => _transformer.AvailableCustomVariables.Length == 0;
 
+    /// <summary>Строки таблицы: кадры.</summary>
     public ObservableCollection<GifFrameViewModel> Frames { get; } = new();
 
     [ObservableProperty]
     private double _frameDelayMs = DefaultFrameDelayMs;
+
+    // ---- Переход между кадрами ----
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsNoTransition), nameof(IsSmoothTransition), nameof(IsFadeTransition))]
+    [NotifyPropertyChangedFor(nameof(HasTransition), nameof(TransitionHint), nameof(Summary))]
+    private GifTransition _transition = GifTransition.None;
+
+    /// <summary>Сколько промежуточных кадров добавляется на каждый переход.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Summary))]
+    private double _transitionFrames = DefaultTransitionFrames;
+
+    // Свойства для RadioButton: выбранный вариант - один из трёх
+    public bool IsNoTransition
+    {
+        get => Transition == GifTransition.None;
+        set { if (value) Transition = GifTransition.None; }
+    }
+
+    public bool IsSmoothTransition
+    {
+        get => Transition == GifTransition.Smooth;
+        set { if (value) Transition = GifTransition.Smooth; }
+    }
+
+    public bool IsFadeTransition
+    {
+        get => Transition == GifTransition.Fade;
+        set { if (value) Transition = GifTransition.Fade; }
+    }
+
+    public bool HasTransition => Transition != GifTransition.None;
+
+    public string TransitionHint => Transition switch
+    {
+        GifTransition.Smooth => "Между соседними кадрами добавляются промежуточные: значения параметров меняются плавно.",
+        GifTransition.Fade => "Каждый кадр плавно появляется из чёрного и гаснет в чёрный. Анимация зацикливается через чёрный.",
+        _ => "Показываются только заданные кадры, без промежуточных."
+    };
+
+    /// <summary>Сколько кадров получится в итоговом GIF.</summary>
+    public string Summary =>
+        $"Кадров в GIF: {GifFramePlanner.CountFrames(Frames.Count, Transition, (int)Math.Round(TransitionFrames))}";
+
+    // ---- Состояние ----
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsNotBusy))]
@@ -56,12 +115,12 @@ public partial class GifGeneratorViewModel : ObservableObject
     public bool IsNotBusy => !IsBusy;
 
     [ObservableProperty]
-    private string _status = "Нажмите «+», чтобы добавить кадр, и задайте для него параметры преобразователя.";
+    private string _status = "Нажмите «+» под таблицей, чтобы добавить кадр, и задайте значения параметров.";
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private void AddFrame()
     {
-        // Новый кадр начинается со значений предыдущего - удобно менять один параметр от кадра к кадру
+        // Новая строка начинается со значений предыдущей - удобно менять один параметр от кадра к кадру
         var previous = Frames.LastOrDefault();
         Frames.Add(new GifFrameViewModel(_transformer.AvailableCustomVariables, previous, RemoveFrame));
 
@@ -88,17 +147,20 @@ public partial class GifGeneratorViewModel : ObservableObject
     [RelayCommand]
     private async Task GenerateAsync()
     {
-        if (Frames.Count < MinFrames)
+        int requiredFrames = Transition == GifTransition.Fade ? MinFramesForFade : MinFrames;
+        if (Frames.Count < requiredFrames)
         {
-            Status = $"Для анимации нужно минимум {MinFrames} кадра: добавьте их кнопкой «+».";
+            Status = $"Нужно минимум кадров: {requiredFrames}. Добавьте их кнопкой «+».";
             return;
         }
 
         IsBusy = true;
 
-        var frameVariables = Frames.Select(f => f.ToModels()).ToArray();
+        // Всё нужное копируется до перехода в фоновый поток
+        var keyframes = Frames.Select(f => f.ToModels()).ToArray();
+        var plan = GifFramePlanner.Plan(keyframes, Transition, (int)Math.Round(TransitionFrames));
         int delay = (int)Math.Round(FrameDelayMs);
-        var progress = new Progress<int>(done => Status = $"Обработка кадра {done} из {frameVariables.Length}...");
+        var progress = new Progress<int>(done => Status = $"Обработка кадра {done} из {plan.Count}...");
 
         try
         {
@@ -106,11 +168,22 @@ public partial class GifGeneratorViewModel : ObservableObject
             {
                 var source = LoadScaledSource();
 
+                // Соседние кадры с одинаковыми параметрами (Fade) рендерятся один раз
+                TransformerVariable[]? lastVariables = null;
+                BitmapSource? lastRendered = null;
+
                 // Кадры создаются лениво: GifService перебирает их по одному и сразу кодирует
-                var frames = frameVariables.Select((variables, index) =>
+                var frames = plan.Select((spec, index) =>
                 {
                     progress.Report(index + 1);
-                    return _transformer.Transform(source, variables);
+
+                    if (!ReferenceEquals(spec.Variables, lastVariables))
+                    {
+                        lastRendered = _transformer.Transform(source, spec.Variables);
+                        lastVariables = spec.Variables;
+                    }
+
+                    return BitmapEffects.Dim(lastRendered!, spec.Brightness);
                 });
 
                 return _gifService.Save(frames, _sourcePath, delay);
@@ -145,7 +218,7 @@ public partial class GifGeneratorViewModel : ObservableObject
     }
 }
 
-/// <summary>Один кадр (контрольная точка): собственный набор значений параметров преобразователя.</summary>
+/// <summary>Строка таблицы: один кадр (номер, значения параметров и кнопка удаления).</summary>
 public partial class GifFrameViewModel : ObservableObject
 {
     private readonly Action<GifFrameViewModel> _remove;
@@ -157,21 +230,20 @@ public partial class GifFrameViewModel : ObservableObject
     {
         _remove = remove;
 
-        Variables = definitions
-            .Select(definition => new TransformerVariableViewModel(definition, () => { }))
-            .ToArray();
+        Cells = definitions.Select(definition => new GifCellViewModel(definition)).ToArray();
 
         if (previous is not null)
         {
-            // Параметры в обоих кадрах созданы из одного и того же списка, порядок совпадает
-            for (int i = 0; i < Variables.Count; i++)
+            // Ячейки в обеих строках созданы из одного и того же списка, порядок совпадает
+            for (int i = 0; i < Cells.Count; i++)
             {
-                Variables[i].Value = previous.Variables[i].Value;
+                Cells[i].Value = previous.Cells[i].Value;
             }
         }
     }
 
-    public IReadOnlyList<TransformerVariableViewModel> Variables { get; }
+    /// <summary>Ячейки строки - по одной на параметр преобразователя.</summary>
+    public IReadOnlyList<GifCellViewModel> Cells { get; }
 
     /// <summary>Порядковый номер кадра для отображения (с единицы).</summary>
     [ObservableProperty]
@@ -181,5 +253,32 @@ public partial class GifFrameViewModel : ObservableObject
     private void Remove() => _remove(this);
 
     /// <summary>Значения параметров этого кадра для передачи в Transform.</summary>
-    public TransformerVariable[] ToModels() => Variables.Select(v => v.ToModel()).ToArray();
+    public TransformerVariable[] ToModels() => Cells.Select(c => c.ToModel()).ToArray();
+}
+
+/// <summary>Ячейка таблицы: значение одного параметра в одном кадре. Значение ограничивается границами параметра.</summary>
+public sealed class GifCellViewModel : ObservableObject
+{
+    private readonly TransformerVariable _definition;
+    private double _value;
+
+    public GifCellViewModel(TransformerVariable definition)
+    {
+        _definition = definition;
+        _value = definition.DefaultValue;
+    }
+
+    public double Value
+    {
+        get => _value;
+        set
+        {
+            _value = Math.Clamp(value, _definition.MinValue, _definition.MaxValue);
+
+            // Уведомляем всегда, чтобы TextBox показал исправленное значение, даже если оно не изменилось
+            OnPropertyChanged();
+        }
+    }
+
+    public TransformerVariable ToModel() => _definition.WithValue(_value);
 }
