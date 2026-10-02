@@ -15,6 +15,11 @@ public sealed class AutokineticTransformer : PixelTransformerBase
     /// <summary>Доля самых тёмных и самых светлых пикселей, отсекаемая при растяжении контраста, %.</summary>
     private const int DefaultClipPercent = 2;
 
+    // Значения параметра «направление линий»
+    private const int HorizontalLines = 1;
+    private const int VerticalLines = 2;
+    private const int DefaultLinesDirection = HorizontalLines;
+
     private const double PercentScale = 100.0;
 
     /// <summary>Минимальный шаг между линиями, px.</summary>
@@ -35,6 +40,18 @@ public sealed class AutokineticTransformer : PixelTransformerBase
         MinValue = 30,
         DefaultValue = DefaultLinesAcross,
         MaxValue = 200,
+        Step = 1
+    };
+
+    private static readonly TransformerVariable DirectionVariable = new()
+    {
+        Name = "Направление линий (1 - гориз., 2 - верт.)",
+        Key = "lines_direction",
+        Description = "1 - горизонтальные линии, 2 - вертикальные. Острия на границах фигур всегда " +
+                      "направлены вдоль линий, поэтому направление меняет вид иллюзии.",
+        MinValue = HorizontalLines,
+        DefaultValue = DefaultLinesDirection,
+        MaxValue = VerticalLines,
         Step = 1
     };
 
@@ -69,11 +86,12 @@ public sealed class AutokineticTransformer : PixelTransformerBase
         "пульсирующими или расползающимися. Лучше работает на контрастных силуэтах; эффект индивидуален.";
 
     public override TransformerVariable[] AvailableCustomVariables { get; } =
-        [LinesAcrossVariable, BlurPassesVariable, ClipVariable];
+        [LinesAcrossVariable, DirectionVariable, BlurPassesVariable, ClipVariable];
 
     protected override byte[] Process(byte[] pixels, int width, int height, TransformerVariable[]? customVariables)
     {
         int linesAcross = (int)Math.Round(customVariables.GetValue(LinesAcrossVariable));
+        int direction = (int)Math.Round(customVariables.GetValue(DirectionVariable));
         int blurPasses = (int)Math.Round(customVariables.GetValue(BlurPassesVariable));
         double clip = customVariables.GetValue(ClipVariable) / PercentScale;
 
@@ -93,17 +111,32 @@ public sealed class AutokineticTransformer : PixelTransformerBase
         Array.Fill(result, BitmapHelper.White);
 
         double halfSpacing = spacing / 2.0;
+        bool vertical = direction == VerticalLines;
+
+        // Для каждой позиции поперёк линий: расстояние до оси ближайшей линии
+        // и координата на этой оси, в которой берётся толщина линии
+        int acrossLength = vertical ? width : height;
+        var distanceToAxis = new double[acrossLength];
+        var axisPosition = new int[acrossLength];
+        for (int a = 0; a < acrossLength; a++)
+        {
+            double axis = (a / spacing) * spacing + halfSpacing;
+            distanceToAxis[a] = Math.Abs(a + HalfPixel - axis);
+            axisPosition[a] = Math.Min(acrossLength - 1, (int)axis);
+        }
 
         for (int y = 0; y < height; y++)
         {
-            double center = (y / spacing) * spacing + halfSpacing;
-            double dy = Math.Abs(y + HalfPixel - center);
-            int sampleY = Math.Min(height - 1, (int)center);
-
             for (int x = 0; x < width; x++)
             {
-                double halfThickness = halfSpacing * darkness[sampleY * width + x];
-                double coverage = Math.Clamp(halfThickness - dy + HalfPixel, 0.0, 1.0);
+                // Горизонтальные линии: толщина зависит от x на оси линии (строка axisPosition[y]).
+                // Вертикальные: толщина зависит от y на оси линии (столбец axisPosition[x]).
+                int across = vertical ? x : y;
+                int sampleX = vertical ? axisPosition[x] : x;
+                int sampleY = vertical ? y : axisPosition[y];
+
+                double halfThickness = halfSpacing * darkness[sampleY * width + sampleX];
+                double coverage = Math.Clamp(halfThickness - distanceToAxis[across] + HalfPixel, 0.0, 1.0);
 
                 if (coverage > 0)
                 {
