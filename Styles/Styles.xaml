@@ -121,4 +121,65 @@
             </DataTrigger>
         </Style.Triggers>
     </Style>
+
+    <!-- Кнопка с текстом: прозрачная, со скруглёнными углами и рамкой -->
+    <Style x:Key="TextButton" TargetType="Button">
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="14,4" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="6"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HoverBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource PressedBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Bd" Property="Opacity" Value="0.35" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Параметр преобразователя: название, значение, ползунок и описание (главное окно и генератор GIF) -->
+    <DataTemplate x:Key="TransformerVariableTemplate">
+        <StackPanel Margin="0,0,0,8">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Right"
+                           FontWeight="SemiBold"
+                           Text="{Binding Value, ElementName=ValueSlider, StringFormat={}{0:0.##}}" />
+                <TextBlock Text="{Binding Name}" TextWrapping="Wrap" Margin="0,0,8,0" />
+            </DockPanel>
+
+            <!-- Minimum/Maximum должны идти раньше Value, иначе значение будет обрезано до 0..10 -->
+            <Slider x:Name="ValueSlider"
+                    Minimum="{Binding MinValue}"
+                    Maximum="{Binding MaxValue}"
+                    TickFrequency="{Binding Step}"
+                    IsSnapToTickEnabled="True"
+                    Value="{Binding Value, Delay=150}" />
+
+            <TextBlock Text="{Binding Description}"
+                       TextWrapping="Wrap"
+                       FontSize="10"
+                       Foreground="{DynamicResource SecondaryTextBrush}" />
+        </StackPanel>
+    </DataTemplate>
 </ResourceDictionary>

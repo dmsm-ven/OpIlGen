@@ -34,6 +34,10 @@
                         Content="&#xE838;"
                         ToolTip="Открыть папку с изображениями"
                         Command="{Binding OpenOutputFolderCommand}" />
+                <Button Style="{StaticResource IconButton}"
+                        Content="&#xE768;"
+                        ToolTip="Генератор GIF-анимации"
+                        Command="{Binding OpenGifGeneratorCommand}" />
             </StackPanel>
 
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
@@ -106,33 +110,8 @@
                 <!-- Настраиваемые параметры выбранного преобразователя -->
                 <GroupBox Grid.Row="1" Header="Параметры" Margin="0,8,0,0" Padding="6"
                           Visibility="{Binding HasCustomVariables, Converter={StaticResource BoolToVisibility}}">
-                    <ItemsControl ItemsSource="{Binding CustomVariables}" FontSize="11">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Margin="0,0,0,8">
-                                    <DockPanel>
-                                        <TextBlock DockPanel.Dock="Right"
-                                                   FontWeight="SemiBold"
-                                                   Text="{Binding Value, ElementName=ValueSlider, StringFormat={}{0:0.##}}" />
-                                        <TextBlock Text="{Binding Name}" TextWrapping="Wrap" Margin="0,0,8,0" />
-                                    </DockPanel>
-
-                                    <!-- Minimum/Maximum должны идти раньше Value, иначе значение будет обрезано до 0..10 -->
-                                    <Slider x:Name="ValueSlider"
-                                            Minimum="{Binding MinValue}"
-                                            Maximum="{Binding MaxValue}"
-                                            TickFrequency="{Binding Step}"
-                                            IsSnapToTickEnabled="True"
-                                            Value="{Binding Value, Delay=150}" />
-
-                                    <TextBlock Text="{Binding Description}"
-                                               TextWrapping="Wrap"
-                                               FontSize="10"
-                                               Foreground="{DynamicResource SecondaryTextBrush}" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                    <ItemsControl ItemsSource="{Binding CustomVariables}" FontSize="11"
+                                  ItemTemplate="{StaticResource TransformerVariableTemplate}" />
                 </GroupBox>
             </Grid>
         </Grid>

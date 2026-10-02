@@ -15,6 +15,7 @@ public partial class MainViewModel : ObservableObject
     private readonly IImageService _imageService;
     private readonly IFullScreenService _fullScreen;
     private readonly IShellService _shell;
+    private readonly IGifGeneratorWindowService _gifGenerator;
     private readonly IThemeService _themeService;
     private readonly ISettingsService _settings;
 
@@ -37,6 +38,7 @@ public partial class MainViewModel : ObservableObject
         IImageService imageService,
         IFullScreenService fullScreen,
         IShellService shell,
+        IGifGeneratorWindowService gifGenerator,
         IThemeService themeService,
         ISettingsService settings,
         IEnumerable<IImageTransformer> transformers)
@@ -45,6 +47,7 @@ public partial class MainViewModel : ObservableObject
         _imageService = imageService;
         _fullScreen = fullScreen;
         _shell = shell;
+        _gifGenerator = gifGenerator;
         _themeService = themeService;
         _settings = settings;
         IsDarkTheme = themeService.Current == AppTheme.Dark;
@@ -56,9 +59,11 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<IImageTransformer> Transformers { get; }
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(OpenGifGeneratorCommand))]
     private string? _sourcePath;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(OpenGifGeneratorCommand))]
     private IImageTransformer? _selectedTransformer;
 
     /// <summary>Настраиваемые параметры выбранного преобразователя (ползунки в UI).</summary>
@@ -117,6 +122,18 @@ public partial class MainViewModel : ObservableObject
     }
 
     private bool CanShowFullScreen() => ResultImage is not null;
+
+    [RelayCommand(CanExecute = nameof(CanOpenGifGenerator))]
+    private void OpenGifGenerator()
+    {
+        if (SourcePath is not null && SelectedTransformer is not null)
+        {
+            // Окно модальное: берётся выбор на момент открытия (файл и преобразователь)
+            _gifGenerator.Show(SourcePath, SelectedTransformer);
+        }
+    }
+
+    private bool CanOpenGifGenerator() => !string.IsNullOrEmpty(SourcePath) && SelectedTransformer is not null;
 
     [RelayCommand]
     private void OpenOutputFolder()

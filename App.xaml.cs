@@ -35,6 +35,8 @@ public partial class App : Application
         services.AddSingleton<IImageService, ImageService>();
         services.AddSingleton<IFullScreenService, FullScreenService>();
         services.AddSingleton<IShellService, ShellService>();
+        services.AddSingleton<IGifService, GifService>();
+        services.AddSingleton<IGifGeneratorWindowService, GifGeneratorWindowService>();
         services.AddSingleton<IThemeService, ThemeService>();
         services.AddSingleton<ISettingsService, SettingsService>();
 
