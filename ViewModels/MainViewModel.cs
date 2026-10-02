@@ -21,6 +21,17 @@ public partial class MainViewModel : ObservableObject
     // Значения параметров запоминаются для каждого преобразователя при переключении между ними
     private readonly Dictionary<string, TransformerVariableViewModel[]> _variableCache = new();
 
+    /// <summary>Через сколько после последнего изменения результат сохраняется в файл.</summary>
+    private static readonly TimeSpan SaveDelay = TimeSpan.FromSeconds(2.5);
+
+    // Исходное изображение кэшируется, чтобы не читать файл при каждом изменении эффекта
+    private BitmapSource? _loadedImage;
+    private string? _loadedPath;
+
+    private CancellationTokenSource? _transformCts;
+    private CancellationTokenSource? _saveCts;
+    private (BitmapSource Image, string SourcePath, string Key)? _pendingSave;
+
     public MainViewModel(
         IFileDialogService fileDialog,
         IImageService imageService,
@@ -73,12 +84,12 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _title = $"{AppName} - выберите изображение (.jpg / .png)";
 
-    partial void OnSourcePathChanged(string? value) => ApplyTransform();
+    partial void OnSourcePathChanged(string? value) => RequestTransform();
 
     partial void OnSelectedTransformerChanged(IImageTransformer? value)
     {
         CustomVariables = GetVariables(value);
-        ApplyTransform();
+        RequestTransform();
     }
 
     partial void OnResultImageChanged(BitmapSource? value)
@@ -145,7 +156,7 @@ public partial class MainViewModel : ObservableObject
         if (!_variableCache.TryGetValue(transformer.Key, out var variables))
         {
             variables = transformer.AvailableCustomVariables
-                .Select(v => new TransformerVariableViewModel(v, ApplyTransform))
+                .Select(v => new TransformerVariableViewModel(v, RequestTransform))
                 .ToArray();
             _variableCache[transformer.Key] = variables;
         }
@@ -153,26 +164,105 @@ public partial class MainViewModel : ObservableObject
         return variables;
     }
 
-    private void ApplyTransform()
+    private void RequestTransform() => _ = ApplyTransformAsync();
+
+    /// <summary>
+    /// Преобразование выполняется в фоне, результат сразу выводится на холст,
+    /// а сохранение в файл откладывается (см. <see cref="SaveAfterDelayAsync"/>).
+    /// </summary>
+    private async Task ApplyTransformAsync()
     {
         if (string.IsNullOrEmpty(SourcePath) || SelectedTransformer is null)
         {
             return;
         }
 
+        // Предыдущее, ещё не завершённое преобразование становится неактуальным
+        _transformCts?.Cancel();
+        var cts = new CancellationTokenSource();
+        _transformCts = cts;
+
+        var path = SourcePath;
+        var transformer = SelectedTransformer;
+        var variables = CustomVariables.Select(v => v.ToModel()).ToArray();
+        var cachedSource = path == _loadedPath ? _loadedImage : null;
+
         try
         {
-            var source = _imageService.Load(SourcePath);
-            var variables = CustomVariables.Select(v => v.ToModel()).ToArray();
-            var result = SelectedTransformer.Transform(source, variables);
-            var savedPath = _imageService.SaveResult(result, SourcePath, SelectedTransformer.Key);
+            var (source, result) = await Task.Run(() =>
+            {
+                var src = cachedSource ?? _imageService.Load(path);
+                return (src, transformer.Transform(src, variables));
+            });
+
+            if (cts.IsCancellationRequested)
+            {
+                return; // за время расчёта пользователь уже изменил настройки
+            }
+
+            _loadedPath = path;
+            _loadedImage = source;
 
             ResultImage = result;
-            Title = $"{AppName} - {Path.GetFileName(SourcePath)} -> {savedPath}";
+            Title = $"{AppName} - {Path.GetFileName(path)} (сохранение...)";
+
+            _ = SaveAfterDelayAsync(result, path, transformer.Key);
         }
         catch (Exception ex)
         {
-            Title = $"{AppName} - ошибка: {ex.Message}";
+            if (!cts.IsCancellationRequested)
+            {
+                Title = $"{AppName} - ошибка: {ex.Message}";
+            }
+        }
+    }
+
+    /// <summary>Сохраняет результат в файл, если за <see cref="SaveDelay"/> не было новых изменений.</summary>
+    private async Task SaveAfterDelayAsync(BitmapSource image, string sourcePath, string key)
+    {
+        _saveCts?.Cancel();
+        var cts = new CancellationTokenSource();
+        _saveCts = cts;
+        _pendingSave = (image, sourcePath, key);
+
+        try
+        {
+            await Task.Delay(SaveDelay, cts.Token);
+            _pendingSave = null;
+
+            var savedPath = await Task.Run(() => _imageService.SaveResult(image, sourcePath, key));
+
+            if (!cts.IsCancellationRequested)
+            {
+                Title = $"{AppName} - {Path.GetFileName(sourcePath)} -> {savedPath}";
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Появилось более свежее изменение - сохранится оно
+        }
+        catch (Exception ex)
+        {
+            Title = $"{AppName} - ошибка сохранения: {ex.Message}";
+        }
+    }
+
+    /// <summary>Немедленно сохраняет результат, если сохранение ещё ожидает (вызывается при закрытии окна).</summary>
+    public void FlushPendingSave()
+    {
+        _saveCts?.Cancel();
+
+        if (_pendingSave is { } pending)
+        {
+            _pendingSave = null;
+            try
+            {
+                _imageService.SaveResult(pending.Image, pending.SourcePath, pending.Key);
+            }
+            catch
+            {
+                // Закрываем окно - ошибку сохранения показывать уже некому
+            }
         }
     }
 }

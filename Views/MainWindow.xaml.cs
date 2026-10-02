@@ -9,5 +9,8 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = viewModel;
+
+        // Если результат ещё не успел сохраниться (отложенное сохранение) - сохраняем при закрытии
+        Closing += (_, _) => viewModel.FlushPendingSave();
     }
 }
