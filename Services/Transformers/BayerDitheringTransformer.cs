@@ -2,7 +2,20 @@ namespace OpIlGen.Services.Transformers;
 
 public sealed class BayerDitheringTransformer : PixelTransformerBase
 {
+    /// <summary>Сторона матрицы Байера (степень двойки).</summary>
     private const int MatrixSize = 8;
+
+    /// <summary>Порог берётся из середины шага матрицы.</summary>
+    private const float ThresholdOffset = 0.5f;
+
+    private const float MaxLuminance = 255f;
+
+    // Построение матрицы Байера: каждый шаг делит её на 4 квадранта
+    private const int QuadrantScale = 4;
+    private const int TopRightOffset = 2;
+    private const int BottomLeftOffset = 3;
+    private const int BottomRightOffset = 1;
+
     private static readonly int[,] Matrix = BuildBayerMatrix(MatrixSize);
 
     public override string Name => "Дизеринг Байера (8x8)";
@@ -22,8 +35,8 @@ public sealed class BayerDitheringTransformer : PixelTransformerBase
             for (int x = 0; x < width; x++)
             {
                 int idx = y * width + x;
-                float threshold = (Matrix[y % MatrixSize, x % MatrixSize] + 0.5f) / cells * 255f;
-                BitmapHelper.SetGray(result, idx, lum[idx] > threshold ? (byte)255 : (byte)0);
+                float threshold = (Matrix[y % MatrixSize, x % MatrixSize] + ThresholdOffset) / cells * MaxLuminance;
+                BitmapHelper.SetGray(result, idx, lum[idx] > threshold ? BitmapHelper.White : BitmapHelper.Black);
             }
         }
 
@@ -42,11 +55,11 @@ public sealed class BayerDitheringTransformer : PixelTransformerBase
             {
                 for (int x = 0; x < size; x++)
                 {
-                    int v = 4 * m[y, x];
+                    int v = QuadrantScale * m[y, x];
                     next[y, x] = v;
-                    next[y, x + size] = v + 2;
-                    next[y + size, x] = v + 3;
-                    next[y + size, x + size] = v + 1;
+                    next[y, x + size] = v + TopRightOffset;
+                    next[y + size, x] = v + BottomLeftOffset;
+                    next[y + size, x + size] = v + BottomRightOffset;
                 }
             }
             m = next;

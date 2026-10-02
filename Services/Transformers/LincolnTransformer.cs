@@ -46,7 +46,7 @@ public sealed class LincolnTransformer : PixelTransformerBase
                         result[i] = b;
                         result[i + 1] = g;
                         result[i + 2] = r;
-                        result[i + 3] = 255;
+                        result[i + 3] = BitmapHelper.Opaque;
                     }
                 }
             }

@@ -2,6 +2,20 @@ namespace OpIlGen.Services.Transformers;
 
 public sealed class NegativeAfterimageTransformer : PixelTransformerBase
 {
+    /// <summary>Минимальный радиус точки фиксации, px.</summary>
+    private const int MinDotRadius = 5;
+
+    /// <summary>Радиус точки = меньшая сторона изображения / это значение.</summary>
+    private const int DotRadiusDivisor = 60;
+
+    /// <summary>Радиус белой обводки относительно радиуса точки.</summary>
+    private const double OutlineRadiusFactor = 1.5;
+
+    // Цвет точки фиксации: красный (порядок BGR)
+    private const byte DotBlue = 0;
+    private const byte DotGreen = 0;
+    private const byte DotRed = 255;
+
     public override string Name => "Негативное послесвечение";
     public override string Key => "afterimage";
     public override string Description =>
@@ -14,10 +28,10 @@ public sealed class NegativeAfterimageTransformer : PixelTransformerBase
 
         for (int i = 0; i < pixels.Length; i += 4)
         {
-            result[i] = (byte)(255 - pixels[i]);
-            result[i + 1] = (byte)(255 - pixels[i + 1]);
-            result[i + 2] = (byte)(255 - pixels[i + 2]);
-            result[i + 3] = 255;
+            result[i] = (byte)(BitmapHelper.White - pixels[i]);
+            result[i + 1] = (byte)(BitmapHelper.White - pixels[i + 1]);
+            result[i + 2] = (byte)(BitmapHelper.White - pixels[i + 2]);
+            result[i + 3] = BitmapHelper.Opaque;
         }
 
         DrawFixationDot(result, width, height);
@@ -27,8 +41,8 @@ public sealed class NegativeAfterimageTransformer : PixelTransformerBase
     private static void DrawFixationDot(byte[] px, int w, int h)
     {
         int cx = w / 2, cy = h / 2;
-        int r = Math.Max(5, Math.Min(w, h) / 60);
-        int outer = r * 3 / 2;
+        int r = Math.Max(MinDotRadius, Math.Min(w, h) / DotRadiusDivisor);
+        int outer = (int)(r * OutlineRadiusFactor);
 
         for (int y = Math.Max(0, cy - outer); y <= Math.Min(h - 1, cy + outer); y++)
         {
@@ -40,11 +54,14 @@ public sealed class NegativeAfterimageTransformer : PixelTransformerBase
 
                 if (d2 <= r * r)
                 {
-                    px[i] = 0; px[i + 1] = 0; px[i + 2] = 255; px[i + 3] = 255; // красный
+                    px[i] = DotBlue;
+                    px[i + 1] = DotGreen;
+                    px[i + 2] = DotRed;
+                    px[i + 3] = BitmapHelper.Opaque;
                 }
                 else if (d2 <= outer * outer)
                 {
-                    px[i] = 255; px[i + 1] = 255; px[i + 2] = 255; px[i + 3] = 255; // белая обводка
+                    BitmapHelper.SetGray(px, y * w + x, BitmapHelper.White); // белая обводка
                 }
             }
         }
