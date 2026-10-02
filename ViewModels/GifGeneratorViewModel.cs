@@ -30,17 +30,20 @@ public partial class GifGeneratorViewModel : ObservableObject
     private readonly IImageTransformer _transformer;
     private readonly IImageService _imageService;
     private readonly IGifService _gifService;
+    private readonly IShellService _shell;
 
     public GifGeneratorViewModel(
         string sourcePath,
         IImageTransformer transformer,
         IImageService imageService,
-        IGifService gifService)
+        IGifService gifService,
+        IShellService shellService)
     {
         _sourcePath = sourcePath;
         _transformer = transformer;
         _imageService = imageService;
         _gifService = gifService;
+        _shell = shellService;
 
         Frames.CollectionChanged += (_, _) => OnPropertyChanged(nameof(Summary));
     }
@@ -115,7 +118,7 @@ public partial class GifGeneratorViewModel : ObservableObject
     public bool IsNotBusy => !IsBusy;
 
     [ObservableProperty]
-    private string _status = "Нажмите «+» под таблицей, чтобы добавить кадр, и задайте значения параметров.";
+    private string _status = "Нажмите «Добавить» чтобы создать кадр, и задайте значения параметров.";
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private void AddFrame()
@@ -215,6 +218,12 @@ public partial class GifGeneratorViewModel : ObservableObject
         var scaled = new TransformedBitmap(source, new ScaleTransform(scale, scale));
         scaled.Freeze();
         return scaled;
+    }
+
+    [RelayCommand]
+    private void OpenOutputFolder()
+    {
+        _shell.OpenFolder(_gifService.OutputDirectory);
     }
 }
 

@@ -1,4 +1,4 @@
-using OpIlGen.Services.Transformers;
+﻿using OpIlGen.Services.Transformers;
 using System.IO;
 using System.Windows.Media.Imaging;
 
@@ -6,6 +6,7 @@ namespace OpIlGen.Services;
 
 public interface IGifService
 {
+    public string OutputDirectory { get; }
     /// <summary>
     /// Склеивает кадры в зацикленную GIF-анимацию и сохраняет её в папку Output/gif под именем исходного файла.
     /// Кадры перебираются по одному, поэтому их можно передавать лениво (не держать все в памяти).
@@ -16,6 +17,7 @@ public interface IGifService
 
 public sealed class GifService : IGifService
 {
+    public string OutputDirectory => Path.Combine(_imageService.OutputDirectory, GifFolderName);
     private const string GifFolderName = "gif";
 
     private readonly IImageService _imageService;
@@ -27,10 +29,9 @@ public sealed class GifService : IGifService
 
     public string Save(IEnumerable<BitmapSource> frames, string sourcePath, int frameDelayMs)
     {
-        var folder = Path.Combine(_imageService.OutputDirectory, GifFolderName);
-        Directory.CreateDirectory(folder);
+        Directory.CreateDirectory(OutputDirectory);
 
-        var gifPath = Path.Combine(folder, Path.GetFileNameWithoutExtension(sourcePath) + ".gif");
+        var gifPath = Path.Combine(OutputDirectory, Path.GetFileNameWithoutExtension(sourcePath) + ".gif");
 
         try
         {
