@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpIlGen.Services;
 using System.Collections.ObjectModel;
@@ -160,7 +160,7 @@ public partial class GifGeneratorViewModel : ObservableObject
         var keyframes = Frames.Select(f => f.ToModels()).ToArray();
         var plan = GifFramePlanner.Plan(keyframes, Transition, (int)Math.Round(TransitionFrames));
         int delay = (int)Math.Round(FrameDelayMs);
-        var progress = new Progress<int>(done => Status = $"Обработка кадра {done} из {plan.Count}...");
+        IProgress<int> progress = new Progress<int>(done => Status = $"Обработка кадра {done} из {plan.Count}...");
 
         try
         {
