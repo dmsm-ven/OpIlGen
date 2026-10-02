@@ -2,14 +2,16 @@ namespace OpIlGen.Services.Transformers;
 
 public sealed class HalftoneTransformer : PixelTransformerBase
 {
+    /// <summary>Сколько точек растра умещается вдоль меньшей стороны изображения.</summary>
+    private const int DefaultDotsAcross = 70;
+
+    /// <summary>Угол наклона сетки точек, градусы (45° как в газетном растре).</summary>
+    private const int DefaultGridAngleDegrees = 45;
+
     /// <summary>Минимальный размер ячейки сетки, px.</summary>
     private const int MinCellSize = 6;
 
-    /// <summary>Размер ячейки = меньшая сторона изображения / это значение.</summary>
-    private const int CellSizeDivisor = 70;
-
-    /// <summary>Угол наклона сетки точек (45° как в газетном растре).</summary>
-    private const double GridAngle = Math.PI / 4;
+    private const double DegreesToRadians = Math.PI / 180.0;
 
     private const double CellCenterOffset = 0.5;
 
@@ -26,20 +28,48 @@ public sealed class HalftoneTransformer : PixelTransformerBase
 
     private const double SampleCenterOffset = 0.5;
 
+    private static readonly TransformerVariable DotsAcrossVariable = new()
+    {
+        Name = "Точек по меньшей стороне",
+        Key = "dots_across",
+        Description = "Сколько точек растра умещается вдоль меньшей стороны изображения. " +
+                      "Меньше точек - крупнее растр и грубее картинка.",
+        MinValue = 20,
+        DefaultValue = DefaultDotsAcross,
+        MaxValue = 200,
+        Step = 1
+    };
+
+    private static readonly TransformerVariable GridAngleVariable = new()
+    {
+        Name = "Угол сетки, °",
+        Key = "grid_angle",
+        Description = "Угол наклона сетки точек. 45° - классический газетный растр, 0° - сетка параллельна краям.",
+        MinValue = 0,
+        DefaultValue = DefaultGridAngleDegrees,
+        MaxValue = 90,
+        Step = 5
+    };
+
     public override string Name => "Полутоновый растр (halftone)";
     public override string Key => "halftone";
     public override string Description =>
-        "Изображение из чёрных точек разного размера на сетке под углом 45° (как в газетах). " +
+        "Изображение из чёрных точек разного размера на наклонной сетке (как в газетах). " +
         "С расстояния точки сливаются в полутона.";
+
+    public override TransformerVariable[] AvailableCustomVariables { get; } = [DotsAcrossVariable, GridAngleVariable];
 
     protected override byte[] Process(byte[] pixels, int width, int height, TransformerVariable[]? customVariables)
     {
+        int dotsAcross = (int)Math.Round(customVariables.GetValue(DotsAcrossVariable));
+        double angle = customVariables.GetValue(GridAngleVariable) * DegreesToRadians;
+
         var lum = BitmapHelper.ToLuminance(pixels);
         var result = new byte[pixels.Length];
         Array.Fill(result, BitmapHelper.White);
 
-        double cell = Math.Max(MinCellSize, Math.Min(width, height) / CellSizeDivisor);
-        double cos = Math.Cos(GridAngle), sin = Math.Sin(GridAngle);
+        double cell = Math.Max(MinCellSize, Math.Min(width, height) / dotsAcross);
+        double cos = Math.Cos(angle), sin = Math.Sin(angle);
 
         // Границы изображения в повёрнутой системе координат (u, v)
         double[] us = { 0, width * cos, height * sin, width * cos + height * sin };

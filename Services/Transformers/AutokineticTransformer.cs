@@ -6,18 +6,19 @@ namespace OpIlGen.Services.Transformers;
 /// </summary>
 public sealed class AutokineticTransformer : PixelTransformerBase
 {
-    /// <summary>Минимальный шаг между линиями, px.</summary>
-    private const int MinLineSpacing = 6;
-
-    /// <summary>Шаг линий = меньшая сторона изображения / это значение.</summary>
-    private const int LineSpacingDivisor = 90;
+    /// <summary>Сколько линий умещается вдоль меньшей стороны изображения.</summary>
+    private const int DefaultLinesAcross = 90;
 
     /// <summary>Сколько раз размывается карта темноты (чем больше, тем плавнее острия).</summary>
-    private const int BlurPasses = 2;
+    private const int DefaultBlurPasses = 2;
 
-    // Перцентили яркости для растяжения контраста
-    private const double LowPercentile = 0.02;
-    private const double HighPercentile = 0.98;
+    /// <summary>Доля самых тёмных и самых светлых пикселей, отсекаемая при растяжении контраста, %.</summary>
+    private const int DefaultClipPercent = 2;
+
+    private const double PercentScale = 100.0;
+
+    /// <summary>Минимальный шаг между линиями, px.</summary>
+    private const int MinLineSpacing = 6;
 
     /// <summary>Минимальный диапазон яркости при растяжении (защита от деления на ноль).</summary>
     private const float MinBrightnessRange = 1f;
@@ -25,22 +26,65 @@ public sealed class AutokineticTransformer : PixelTransformerBase
     /// <summary>Половина пикселя: смещение к центру пикселя и сглаживание краёв линии.</summary>
     private const double HalfPixel = 0.5;
 
+    private static readonly TransformerVariable LinesAcrossVariable = new()
+    {
+        Name = "Линий по меньшей стороне",
+        Key = "lines_across",
+        Description = "Сколько параллельных линий умещается вдоль меньшей стороны изображения. " +
+                      "Больше линий - тоньше и детальнее узор.",
+        MinValue = 30,
+        DefaultValue = DefaultLinesAcross,
+        MaxValue = 200,
+        Step = 1
+    };
+
+    private static readonly TransformerVariable BlurPassesVariable = new()
+    {
+        Name = "Сглаживание острий",
+        Key = "blur_passes",
+        Description = "Сколько раз размывается карта темноты. Чем больше значение, тем плавнее и длиннее " +
+                      "острия на границах фигур.",
+        MinValue = 1,
+        DefaultValue = DefaultBlurPasses,
+        MaxValue = 4,
+        Step = 1
+    };
+
+    private static readonly TransformerVariable ClipVariable = new()
+    {
+        Name = "Отсечение яркости, %",
+        Key = "clip_percent",
+        Description = "Какая доля самых тёмных и самых светлых пикселей игнорируется при растяжении контраста. " +
+                      "Чем больше значение, тем контрастнее результат.",
+        MinValue = 0,
+        DefaultValue = DefaultClipPercent,
+        MaxValue = 20,
+        Step = 1
+    };
+
     public override string Name => "Автокинетическая иллюзия";
     public override string Key => "autokinetic";
     public override string Description =>
         "Параллельные линии, которые на границах тёмных фигур сужаются до острия. Края фигур могут казаться " +
         "пульсирующими или расползающимися. Лучше работает на контрастных силуэтах; эффект индивидуален.";
 
+    public override TransformerVariable[] AvailableCustomVariables { get; } =
+        [LinesAcrossVariable, BlurPassesVariable, ClipVariable];
+
     protected override byte[] Process(byte[] pixels, int width, int height, TransformerVariable[]? customVariables)
     {
-        var lum = BitmapHelper.ToLuminance(pixels);
-        var darkness = ToStretchedDarkness(lum);
+        int linesAcross = (int)Math.Round(customVariables.GetValue(LinesAcrossVariable));
+        int blurPasses = (int)Math.Round(customVariables.GetValue(BlurPassesVariable));
+        double clip = customVariables.GetValue(ClipVariable) / PercentScale;
 
-        int spacing = Math.Max(MinLineSpacing, Math.Min(width, height) / LineSpacingDivisor);
+        var lum = BitmapHelper.ToLuminance(pixels);
+        var darkness = ToStretchedDarkness(lum, clip);
+
+        int spacing = Math.Max(MinLineSpacing, Math.Min(width, height) / linesAcross);
 
         // Сглаживание темноты по площади: из-за него толщина линий на границах убывает постепенно,
         // и линии заканчиваются остриями, а не обрубками.
-        for (int pass = 0; pass < BlurPasses; pass++)
+        for (int pass = 0; pass < blurPasses; pass++)
         {
             BoxBlur(darkness, width, height, spacing);
         }
@@ -71,11 +115,11 @@ public sealed class AutokineticTransformer : PixelTransformerBase
         return result;
     }
 
-    /// <summary>Темнота 0..1 с растяжением контраста по низкому и высокому перцентилям яркости.</summary>
-    private static float[] ToStretchedDarkness(float[] lum)
+    /// <summary>Темнота 0..1 с растяжением контраста; clip - доля пикселей, отсекаемая с каждого края гистограммы.</summary>
+    private static float[] ToStretchedDarkness(float[] lum, double clip)
     {
-        float low = BitmapHelper.Percentile(lum, LowPercentile);
-        float high = BitmapHelper.Percentile(lum, HighPercentile);
+        float low = BitmapHelper.Percentile(lum, clip);
+        float high = BitmapHelper.Percentile(lum, 1.0 - clip);
         if (high - low < MinBrightnessRange) high = low + MinBrightnessRange;
 
         var darkness = new float[lum.Length];

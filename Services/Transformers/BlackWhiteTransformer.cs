@@ -7,19 +7,33 @@ namespace OpIlGen.Services.Transformers;
 public sealed class BlackWhiteTransformer : IImageTransformer
 {
     /// <summary>Яркость, начиная с которой пиксель становится белым.</summary>
-    private const double Threshold = 128;
+    private const double DefaultThreshold = 128;
 
     /// <summary>Максимальное значение канала; для альфы означает полную непрозрачность.</summary>
     private const double MaxChannel = 255;
+
+    private static readonly TransformerVariable ThresholdVariable = new()
+    {
+        Name = "Порог яркости",
+        Key = "threshold",
+        Description = "Пиксели светлее этого значения становятся белыми, остальные чёрными. " +
+                      "Чем больше значение, тем темнее результат.",
+        MinValue = 0,
+        DefaultValue = DefaultThreshold,
+        MaxValue = MaxChannel,
+        Step = 1
+    };
 
     public string Name => "Чёрно-белое (2 цвета)";
     public string Key => "black_white";
     public string Description => "Жёсткий порог яркости: каждый пиксель становится либо чёрным, либо белым.";
 
-    public TransformerVariable[] AvailableCustomVariables => Array.Empty<TransformerVariable>();
+    public TransformerVariable[] AvailableCustomVariables { get; } = [ThresholdVariable];
 
     public BitmapSource Transform(BitmapSource source, TransformerVariable[]? customVariables = null)
     {
+        double threshold = customVariables.GetValue(ThresholdVariable);
+
         var bgra = new FormatConvertedBitmap(source, PixelFormats.Bgra32, null, 0);
 
         int width = bgra.PixelWidth;
@@ -43,7 +57,7 @@ public sealed class BlackWhiteTransformer : IImageTransformer
             double luminance = BitmapHelper.RedWeight * r
                              + BitmapHelper.GreenWeight * g
                              + BitmapHelper.BlueWeight * b;
-            byte value = luminance >= Threshold ? BitmapHelper.White : BitmapHelper.Black;
+            byte value = luminance >= threshold ? BitmapHelper.White : BitmapHelper.Black;
 
             pixels[i] = value;
             pixels[i + 1] = value;
