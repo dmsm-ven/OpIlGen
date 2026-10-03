@@ -48,6 +48,18 @@ public partial class App : Application
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<ISettingsWindowService, SettingsWindowService>();
 
+        ConfigureTransformers(services);
+
+
+        // ViewModel и окна
+        services.AddSingleton<MainViewModel>();
+        services.AddSingleton<MainWindow>();
+        services.AddTransient<SettingsViewModel>();
+        services.AddTransient<SettingsWindow>();
+    }
+
+    private static void ConfigureTransformers(IServiceCollection services)
+    {
         // Преобразователи изображений. Чтобы добавить новую иллюзию -
         // создайте класс, реализующий IImageTransformer, и зарегистрируйте его здесь.
         // Порядок регистрации = порядок в списке. Первым идёт оригинал.
@@ -65,13 +77,8 @@ public partial class App : Application
         services.AddSingleton<IImageTransformer, PencilSketchTransformer>();
         services.AddSingleton<IImageTransformer, OilPaintingTransformer>();
         services.AddSingleton<IImageTransformer, PeripheralDriftTransformer>();
-
-        // ViewModel и окна
-        services.AddSingleton<MainViewModel>();
-        services.AddSingleton<MainWindow>();
-        services.AddTransient<SettingsViewModel>();
-        services.AddTransient<SettingsWindow>();
     }
+
 
     protected override void OnExit(ExitEventArgs e)
     {
