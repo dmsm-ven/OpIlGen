@@ -62,6 +62,8 @@ public partial class App : Application
         services.AddSingleton<IImageTransformer, HermannGridTransformer>();
         services.AddSingleton<IImageTransformer, CafeWallTransformer>();
         services.AddSingleton<IImageTransformer, AutokineticTransformer>();
+        services.AddSingleton<IImageTransformer, PencilSketchTransformer>();
+        services.AddSingleton<IImageTransformer, OilPaintingTransformer>();
 
         // ViewModel и окна
         services.AddSingleton<MainViewModel>();

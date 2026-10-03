@@ -112,5 +112,17 @@
   "transformer.afterimage_positive.var.clip_percent.name": "Отсечение яркости, %",
   "transformer.afterimage_positive.var.clip_percent.description": "Какая доля самых тёмных и самых светлых пикселей игнорируется при растяжении контраста. Чем больше значение, тем контрастнее результат.",
   "transformer.afterimage_positive.var.dot_size.name": "Размер точки",
-  "transformer.afterimage_positive.var.dot_size.description": "Радиус точки фиксации взгляда в промилле (‰) от меньшей стороны изображения."
+  "transformer.afterimage_positive.var.dot_size.description": "Радиус точки фиксации взгляда в промилле (‰) от меньшей стороны изображения.",
+  "transformer.pencil_sketch.name": "Рисунок карандашем",
+  "transformer.pencil_sketch.description": "Изображение превращается в карандашный набросок: контуры и тени прорисованы тонкими штрихами на белой бумаге.",
+  "transformer.pencil_sketch.var.tip_size.name": "Размер грифеля",
+  "transformer.pencil_sketch.var.tip_size.description": "Толщина карандашных штрихов в пикселях. Чем больше значение, тем толще и мягче линии.",
+  "transformer.pencil_sketch.var.color_range.name": "Диапазон тонов",
+  "transformer.pencil_sketch.var.color_range.description": "Насколько тёмным получается рисунок. Положительные значения делают тени насыщеннее, отрицательные - рисунок светлее, остаются почти одни контуры.",
+  "transformer.oil_painting.name": "Масляная живопись",
+  "transformer.oil_painting.description": "Изображение превращается в картину маслом: соседние пиксели объединяются в мазки одного цвета.",
+  "transformer.oil_painting.var.brush_size.name": "Размер кисти",
+  "transformer.oil_painting.var.brush_size.description": "Радиус мазка в пикселях. Чем больше значение, тем крупнее мазки и тем меньше деталей.",
+  "transformer.oil_painting.var.coarseness.name": "Грубость",
+  "transformer.oil_painting.var.coarseness.description": "Сколько уровней яркости различается при выборе цвета мазка. Меньше значение - более плоские, «мультяшные» цвета, больше - плавнее переходы."
 }

@@ -112,5 +112,17 @@
   "transformer.autokinetic.var.blur_passes.name": "Tip smoothing",
   "transformer.autokinetic.var.blur_passes.description": "How many times the darkness map is blurred. The higher the value, the smoother and longer the tips at the edges of shapes.",
   "transformer.autokinetic.var.clip_percent.name": "Brightness clipping, %",
-  "transformer.autokinetic.var.clip_percent.description": "The share of the darkest and brightest pixels ignored when stretching contrast. The higher the value, the more contrasty the result."
+  "transformer.autokinetic.var.clip_percent.description": "The share of the darkest and brightest pixels ignored when stretching contrast. The higher the value, the more contrasty the result.",
+  "transformer.pencil_sketch.name": "Pencil sketch",
+  "transformer.pencil_sketch.description": "The image turns into a pencil drawing: outlines and shadows are drawn with thin strokes on white paper.",
+  "transformer.pencil_sketch.var.tip_size.name": "Pencil tip size",
+  "transformer.pencil_sketch.var.tip_size.description": "Thickness of the pencil strokes in pixels. The larger the value, the thicker and softer the lines.",
+  "transformer.pencil_sketch.var.color_range.name": "Tonal range",
+  "transformer.pencil_sketch.var.color_range.description": "How dark the drawing is. Positive values make shadows richer, negative values make the drawing lighter, leaving mostly outlines.",
+  "transformer.oil_painting.name": "Oil painting",
+  "transformer.oil_painting.description": "The image turns into an oil painting: neighboring pixels are merged into brush strokes of a single color.",
+  "transformer.oil_painting.var.brush_size.name": "Brush size",
+  "transformer.oil_painting.var.brush_size.description": "Stroke radius in pixels. The larger the value, the bigger the strokes and the fewer the details.",
+  "transformer.oil_painting.var.coarseness.name": "Coarseness",
+  "transformer.oil_painting.var.coarseness.description": "How many brightness levels are distinguished when choosing the stroke color. A lower value gives flatter, “cartoonish” colors, a higher one gives smoother transitions."
 }

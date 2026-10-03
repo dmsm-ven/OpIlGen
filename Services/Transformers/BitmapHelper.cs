@@ -88,6 +88,40 @@ internal static class BitmapHelper
         return HistogramBins - 1;
     }
 
+    /// <summary>Разделимое размытие «прямоугольником» (скользящая сумма, края повторяются).</summary>
+    public static void BoxBlur(float[] data, int w, int h, int radius)
+    {
+        var temp = new float[data.Length];
+        float size = radius * 2 + 1;
+
+        for (int y = 0; y < h; y++)
+        {
+            int row = y * w;
+            float sum = 0;
+            for (int k = -radius; k <= radius; k++)
+                sum += data[row + Math.Clamp(k, 0, w - 1)];
+
+            for (int x = 0; x < w; x++)
+            {
+                temp[row + x] = sum / size;
+                sum += data[row + Math.Min(w - 1, x + radius + 1)] - data[row + Math.Max(0, x - radius)];
+            }
+        }
+
+        for (int x = 0; x < w; x++)
+        {
+            float sum = 0;
+            for (int k = -radius; k <= radius; k++)
+                sum += temp[Math.Clamp(k, 0, h - 1) * w + x];
+
+            for (int y = 0; y < h; y++)
+            {
+                data[y * w + x] = sum / size;
+                sum += temp[Math.Min(h - 1, y + radius + 1) * w + x] - temp[Math.Max(0, y - radius) * w + x];
+            }
+        }
+    }
+
     public static void SetGray(byte[] pixels, int pixelIndex, byte value)
     {
         int i = pixelIndex * 4;
