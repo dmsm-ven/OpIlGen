@@ -1,5 +1,6 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Globalization;
+using System.IO;
 using System.Text.Json;
 
 namespace OpIlGen.Localization;
