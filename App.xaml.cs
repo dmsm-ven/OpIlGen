@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using OpIlGen.Localization;
 using OpIlGen.Services;
 using OpIlGen.Services.Transformers;
@@ -64,6 +64,7 @@ public partial class App : Application
         services.AddSingleton<IImageTransformer, AutokineticTransformer>();
         services.AddSingleton<IImageTransformer, PencilSketchTransformer>();
         services.AddSingleton<IImageTransformer, OilPaintingTransformer>();
+        services.AddSingleton<IImageTransformer, PeripheralDriftTransformer>();
 
         // ViewModel и окна
         services.AddSingleton<MainViewModel>();
