@@ -124,5 +124,13 @@
   "transformer.oil_painting.var.brush_size.name": "Размер кисти",
   "transformer.oil_painting.var.brush_size.description": "Радиус мазка в пикселях. Чем больше значение, тем крупнее мазки и тем меньше деталей.",
   "transformer.oil_painting.var.coarseness.name": "Грубость",
-  "transformer.oil_painting.var.coarseness.description": "Сколько уровней яркости различается при выборе цвета мазка. Меньше значение - более плоские, «мультяшные» цвета, больше - плавнее переходы."
+  "transformer.oil_painting.var.coarseness.description": "Сколько уровней яркости различается при выборе цвета мазка. Меньше значение - более плоские, «мультяшные» цвета, больше - плавнее переходы.",
+  "transformer.peripheral_drift.name": "Периферический дрейф",
+  "transformer.peripheral_drift.description": "Концентрические кольца из чередующихся светлых и тёмных сегментов. Статичный узор может восприниматься как вращающийся при периферическом зрении или небольших движениях глаз.",
+  "transformer.peripheral_drift.var.rings_across.name": "Колец по радиусу",
+  "transformer.peripheral_drift.var.rings_across.description": "Количество концентрических колец. Больше колец - более мелкий и частый узор.",
+  "transformer.peripheral_drift.var.segments_per_ring.name": "Сегментов на кольцо",
+  "transformer.peripheral_drift.var.segments_per_ring.description": "Количество радиальных сегментов в каждом кольце. Большее значение создаёт более мелкий узор.",
+  "transformer.peripheral_drift.var.pattern_strength.name": "Сила узора, %",
+  "transformer.peripheral_drift.var.pattern_strength.description": "Степень смешивания узора с исходным изображением. При 100% исходная фотография полностью заменяется узором."
 }

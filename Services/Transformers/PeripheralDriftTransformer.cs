@@ -1,4 +1,5 @@
-﻿
+using OpIlGen.Localization;
+
 namespace OpIlGen.Services.Transformers;
 
 /// <summary>
@@ -25,10 +26,9 @@ public sealed class PeripheralDriftTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable RingsVariable = new()
     {
-        Name = "Колец по радиусу",
+        NameKey = "transformer.peripheral_drift.var.rings_across.name",
         Key = "rings_across",
-        Description = "Количество концентрических колец. " +
-                      "Больше колец - более мелкий и частый узор.",
+        DescriptionKey = "transformer.peripheral_drift.var.rings_across.description",
         MinValue = 4,
         DefaultValue = DefaultRingsAcross,
         MaxValue = 24,
@@ -37,10 +37,9 @@ public sealed class PeripheralDriftTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable SegmentsVariable = new()
     {
-        Name = "Сегментов на кольцо",
+        NameKey = "transformer.peripheral_drift.var.segments_per_ring.name",
         Key = "segments_per_ring",
-        Description = "Количество радиальных сегментов в каждом кольце. " +
-                      "Большее значение создаёт более мелкий узор.",
+        DescriptionKey = "transformer.peripheral_drift.var.segments_per_ring.description",
         MinValue = 32,
         DefaultValue = DefaultSegmentsPerRing,
         MaxValue = 128,
@@ -49,24 +48,24 @@ public sealed class PeripheralDriftTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable StrengthVariable = new()
     {
-        Name = "Сила узора, %",
+        NameKey = "transformer.peripheral_drift.var.pattern_strength.name",
         Key = "pattern_strength",
-        Description = "Степень смешивания узора с исходным изображением. " +
-                      "При 100% исходная фотография полностью заменяется узором.",
+        DescriptionKey = "transformer.peripheral_drift.var.pattern_strength.description",
         MinValue = 30,
         DefaultValue = DefaultPatternStrength,
         MaxValue = 100,
         Step = 5
     };
 
-    public override string Name => "Периферический дрейф";
+    public PeripheralDriftTransformer(ILocalizationService localizer) : base(localizer)
+    {
+    }
+
+    public override string Name => Localizer.Get("transformer.peripheral_drift.name");
 
     public override string Key => "peripheral_drift";
 
-    public override string Description =>
-        "Концентрические кольца из чередующихся светлых и тёмных сегментов. " +
-        "Статичный узор может восприниматься как вращающийся при периферическом " +
-        "зрении или небольших движениях глаз.";
+    public override string Description => Localizer.Get("transformer.peripheral_drift.description");
 
     public override TransformerVariable[] AvailableCustomVariables { get; } =
     [

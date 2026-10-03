@@ -124,5 +124,13 @@
   "transformer.oil_painting.var.brush_size.name": "Brush size",
   "transformer.oil_painting.var.brush_size.description": "Stroke radius in pixels. The larger the value, the bigger the strokes and the fewer the details.",
   "transformer.oil_painting.var.coarseness.name": "Coarseness",
-  "transformer.oil_painting.var.coarseness.description": "How many brightness levels are distinguished when choosing the stroke color. A lower value gives flatter, “cartoonish” colors, a higher one gives smoother transitions."
+  "transformer.oil_painting.var.coarseness.description": "How many brightness levels are distinguished when choosing the stroke color. A lower value gives flatter, “cartoonish” colors, a higher one gives smoother transitions.",
+  "transformer.peripheral_drift.name": "Peripheral drift",
+  "transformer.peripheral_drift.description": "Concentric rings of alternating light and dark segments. The static pattern may be perceived as rotating in peripheral vision or during small eye movements.",
+  "transformer.peripheral_drift.var.rings_across.name": "Rings along the radius",
+  "transformer.peripheral_drift.var.rings_across.description": "Number of concentric rings. More rings mean a finer, denser pattern.",
+  "transformer.peripheral_drift.var.segments_per_ring.name": "Segments per ring",
+  "transformer.peripheral_drift.var.segments_per_ring.description": "Number of radial segments in each ring. A larger value creates a finer pattern.",
+  "transformer.peripheral_drift.var.pattern_strength.name": "Pattern strength, %",
+  "transformer.peripheral_drift.var.pattern_strength.description": "How strongly the pattern is blended with the original image. At 100 % the original photo is completely replaced by the pattern."
 }
