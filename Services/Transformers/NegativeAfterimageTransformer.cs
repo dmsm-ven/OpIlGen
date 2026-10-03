@@ -1,3 +1,5 @@
+using OpIlGen.Localization;
+
 namespace OpIlGen.Services.Transformers;
 
 public sealed class NegativeAfterimageTransformer : PixelTransformerBase
@@ -20,20 +22,22 @@ public sealed class NegativeAfterimageTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable DotSizeVariable = new()
     {
-        Name = "Размер точки",
+        NameKey = "transformer.afterimage.var.dot_size.name",
         Key = "dot_size",
-        Description = "Радиус красной точки фиксации взгляда в промилле (‰) от меньшей стороны изображения.",
+        DescriptionKey = "transformer.afterimage.var.dot_size.description",
         MinValue = 5,
         DefaultValue = DefaultDotSizePermille,
         MaxValue = 50,
         Step = 1
     };
 
-    public override string Name => "Негативное послесвечение";
+    public NegativeAfterimageTransformer(ILocalizationService localizer) : base(localizer)
+    {
+    }
+
+    public override string Name => Localizer.Get("transformer.afterimage.name");
     public override string Key => "afterimage";
-    public override string Description =>
-        "Смотрите на красную точку в центре 20-30 секунд, не двигая глаз, затем переведите взгляд " +
-        "на белую стену или пустой лист: вы увидите исходное изображение в нормальных цветах.";
+    public override string Description => Localizer.Get("transformer.afterimage.description");
 
     public override TransformerVariable[] AvailableCustomVariables { get; } = [DotSizeVariable];
 

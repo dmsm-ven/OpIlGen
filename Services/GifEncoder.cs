@@ -60,7 +60,7 @@ public sealed class GifEncoder
     {
         if (bgra.Length != _width * _height * BytesPerPixel)
         {
-            throw new ArgumentException("Размер кадра не совпадает с размером GIF.", nameof(bgra));
+            throw new ArgumentException("Frame size does not match the GIF size.", nameof(bgra));
         }
 
         var (palette, colorCount, indices) = Quantize(bgra);

@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using OpIlGen.Localization;
 using OpIlGen.Services;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -16,8 +17,8 @@ public partial class MainViewModel : ObservableObject
     private readonly IFullScreenService _fullScreen;
     private readonly IShellService _shell;
     private readonly IGifGeneratorWindowService _gifGenerator;
-    private readonly IThemeService _themeService;
-    private readonly ISettingsService _settings;
+    private readonly ISettingsWindowService _settingsWindow;
+    private readonly ILocalizationService _localizer;
 
     // Значения параметров запоминаются для каждого преобразователя при переключении между ними
     private readonly Dictionary<string, TransformerVariableViewModel[]> _variableCache = new();
@@ -33,14 +34,17 @@ public partial class MainViewModel : ObservableObject
     private CancellationTokenSource? _saveCts;
     private (BitmapSource Image, string SourcePath, string Key)? _pendingSave;
 
+    // Текущий статус хранится как функция, чтобы заголовок окна пересобирался при смене языка
+    private Func<string> _statusFactory = () => string.Empty;
+
     public MainViewModel(
         IFileDialogService fileDialog,
         IImageService imageService,
         IFullScreenService fullScreen,
         IShellService shell,
         IGifGeneratorWindowService gifGenerator,
-        IThemeService themeService,
-        ISettingsService settings,
+        ISettingsWindowService settingsWindow,
+        ILocalizationService localizer,
         IEnumerable<IImageTransformer> transformers)
     {
         _fileDialog = fileDialog;
@@ -48,15 +52,19 @@ public partial class MainViewModel : ObservableObject
         _fullScreen = fullScreen;
         _shell = shell;
         _gifGenerator = gifGenerator;
-        _themeService = themeService;
-        _settings = settings;
-        IsDarkTheme = themeService.Current == AppTheme.Dark;
+        _settingsWindow = settingsWindow;
+        _localizer = localizer;
 
-        Transformers = new ObservableCollection<IImageTransformer>(transformers);
-        SelectedTransformer = Transformers.FirstOrDefault();
+        _localizer.LanguageChanged += OnLanguageChanged;
+
+        Transformers = new ObservableCollection<TransformerItemViewModel>(
+            transformers.Select(t => new TransformerItemViewModel(t, localizer)));
+
+        SetStatus(() => _localizer.Get("status.select_image"));
+        SelectedTransformer = Transformers.FirstOrDefault()?.Transformer;
     }
 
-    public ObservableCollection<IImageTransformer> Transformers { get; }
+    public ObservableCollection<TransformerItemViewModel> Transformers { get; }
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(OpenGifGeneratorCommand))]
@@ -64,7 +72,11 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(OpenGifGeneratorCommand))]
+    [NotifyPropertyChangedFor(nameof(SelectedDescription))]
     private IImageTransformer? _selectedTransformer;
+
+    /// <summary>Описание выбранного преобразователя на текущем языке.</summary>
+    public string SelectedDescription => SelectedTransformer?.Description ?? string.Empty;
 
     /// <summary>Настраиваемые параметры выбранного преобразователя (ползунки в UI).</summary>
     [ObservableProperty]
@@ -81,13 +93,9 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _resolutionText = string.Empty;
 
-    /// <summary>Выбрана ли тёмная тема (для подсветки кнопки темы).</summary>
-    [ObservableProperty]
-    private bool _isDarkTheme;
-
     /// <summary>Заголовок окна, он же строка статуса.</summary>
     [ObservableProperty]
-    private string _title = $"{AppName} - выберите изображение (.jpg / .png)";
+    private string _title = AppName;
 
     partial void OnSourcePathChanged(string? value) => RequestTransform();
 
@@ -101,6 +109,24 @@ public partial class MainViewModel : ObservableObject
     {
         ResolutionText = value is null ? string.Empty : $"{value.PixelWidth}×{value.PixelHeight}";
     }
+
+    // ---- Статус в заголовке окна ----
+
+    private void SetStatus(Func<string> factory)
+    {
+        _statusFactory = factory;
+        Title = ComposeTitle();
+    }
+
+    private string ComposeTitle() => $"{AppName} - {_statusFactory()}";
+
+    private void OnLanguageChanged(object? sender, EventArgs e)
+    {
+        Title = ComposeTitle();
+        OnPropertyChanged(nameof(SelectedDescription));
+    }
+
+    // ---- Команды ----
 
     [RelayCommand]
     private void SelectFile()
@@ -144,24 +170,15 @@ public partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Title = $"{AppName} - не удалось открыть папку: {ex.Message}";
+            var message = ex.Message;
+            SetStatus(() => _localizer.Format("status.open_folder_failed", message));
         }
     }
 
     [RelayCommand]
-    private void SetLightTheme() => ChangeTheme(AppTheme.Light);
+    private void OpenSettings() => _settingsWindow.Show();
 
-    [RelayCommand]
-    private void SetDarkTheme() => ChangeTheme(AppTheme.Dark);
-
-    private void ChangeTheme(AppTheme theme)
-    {
-        _themeService.Apply(theme);
-        IsDarkTheme = theme == AppTheme.Dark;
-
-        _settings.Current.Theme = theme;
-        _settings.Save();
-    }
+    // ---- Параметры преобразователя ----
 
     private IReadOnlyList<TransformerVariableViewModel> GetVariables(IImageTransformer? transformer)
     {
@@ -173,13 +190,15 @@ public partial class MainViewModel : ObservableObject
         if (!_variableCache.TryGetValue(transformer.Key, out var variables))
         {
             variables = transformer.AvailableCustomVariables
-                .Select(v => new TransformerVariableViewModel(v, RequestTransform))
+                .Select(v => new TransformerVariableViewModel(v, RequestTransform, _localizer))
                 .ToArray();
             _variableCache[transformer.Key] = variables;
         }
 
         return variables;
     }
+
+    // ---- Преобразование и сохранение ----
 
     private void RequestTransform() => _ = ApplyTransformAsync();
 
@@ -221,7 +240,9 @@ public partial class MainViewModel : ObservableObject
             _loadedImage = source;
 
             ResultImage = result;
-            Title = $"{AppName} - {Path.GetFileName(path)} (сохранение...)";
+
+            var fileName = Path.GetFileName(path);
+            SetStatus(() => _localizer.Format("status.saving", fileName));
 
             _ = SaveAfterDelayAsync(result, path, transformer.Key);
         }
@@ -229,7 +250,8 @@ public partial class MainViewModel : ObservableObject
         {
             if (!cts.IsCancellationRequested)
             {
-                Title = $"{AppName} - ошибка: {ex.Message}";
+                var message = ex.Message;
+                SetStatus(() => _localizer.Format("status.error", message));
             }
         }
     }
@@ -251,7 +273,8 @@ public partial class MainViewModel : ObservableObject
 
             if (!cts.IsCancellationRequested)
             {
-                Title = $"{AppName} - {Path.GetFileName(sourcePath)} -> {savedPath}";
+                var fileName = Path.GetFileName(sourcePath);
+                SetStatus(() => $"{fileName} -> {savedPath}");
             }
         }
         catch (OperationCanceledException)
@@ -260,7 +283,8 @@ public partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Title = $"{AppName} - ошибка сохранения: {ex.Message}";
+            var message = ex.Message;
+            SetStatus(() => _localizer.Format("status.save_error", message));
         }
     }
 

@@ -1,3 +1,5 @@
+using OpIlGen.Localization;
+
 namespace OpIlGen.Services.Transformers;
 
 public sealed class HermannGridTransformer : PixelTransformerBase
@@ -21,9 +23,9 @@ public sealed class HermannGridTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable CellsAcrossVariable = new()
     {
-        Name = "Ячеек по меньшей стороне",
+        NameKey = "transformer.hermann_grid.var.cells_across.name",
         Key = "cells_across",
-        Description = "Сколько ячеек решётки умещается вдоль меньшей стороны изображения.",
+        DescriptionKey = "transformer.hermann_grid.var.cells_across.description",
         MinValue = 4,
         DefaultValue = DefaultCellsAcross,
         MaxValue = 30,
@@ -32,9 +34,9 @@ public sealed class HermannGridTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable LineWidthVariable = new()
     {
-        Name = "Толщина линий, %",
+        NameKey = "transformer.hermann_grid.var.line_width_percent.name",
         Key = "line_width_percent",
-        Description = "Толщина белых линий решётки в процентах от размера ячейки.",
+        DescriptionKey = "transformer.hermann_grid.var.line_width_percent.description",
         MinValue = 5,
         DefaultValue = DefaultLineWidthPercent,
         MaxValue = 50,
@@ -43,21 +45,22 @@ public sealed class HermannGridTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable BackgroundBrightnessVariable = new()
     {
-        Name = "Яркость фона, %",
+        NameKey = "transformer.hermann_grid.var.background_brightness_percent.name",
         Key = "background_brightness_percent",
-        Description = "Насколько затемняется изображение под решёткой. " +
-                      "Чем темнее фон, тем отчётливее призрачные пятна на пересечениях.",
+        DescriptionKey = "transformer.hermann_grid.var.background_brightness_percent.description",
         MinValue = 0,
         DefaultValue = DefaultBackgroundBrightnessPercent,
         MaxValue = 100,
         Step = 5
     };
 
-    public override string Name => "Сетка Германа";
+    public HermannGridTransformer(ILocalizationService localizer) : base(localizer)
+    {
+    }
+
+    public override string Name => Localizer.Get("transformer.hermann_grid.name");
     public override string Key => "hermann_grid";
-    public override string Description =>
-        "Затемнённое изображение с белой решёткой. На пересечениях белых линий, куда вы не смотрите " +
-        "прямо, появляются призрачные тёмные пятна.";
+    public override string Description => Localizer.Get("transformer.hermann_grid.description");
 
     public override TransformerVariable[] AvailableCustomVariables { get; } =
         [CellsAcrossVariable, LineWidthVariable, BackgroundBrightnessVariable];

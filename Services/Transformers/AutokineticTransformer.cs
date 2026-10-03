@@ -1,3 +1,5 @@
+using OpIlGen.Localization;
+
 namespace OpIlGen.Services.Transformers;
 
 /// <summary>
@@ -33,10 +35,9 @@ public sealed class AutokineticTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable LinesAcrossVariable = new()
     {
-        Name = "Линий по меньшей стороне",
+        NameKey = "transformer.autokinetic.var.lines_across.name",
         Key = "lines_across",
-        Description = "Сколько параллельных линий умещается вдоль меньшей стороны изображения. " +
-                      "Больше линий - тоньше и детальнее узор.",
+        DescriptionKey = "transformer.autokinetic.var.lines_across.description",
         MinValue = 30,
         DefaultValue = DefaultLinesAcross,
         MaxValue = 200,
@@ -45,10 +46,9 @@ public sealed class AutokineticTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable DirectionVariable = new()
     {
-        Name = "Направление линий (1 - гориз., 2 - верт.)",
+        NameKey = "transformer.autokinetic.var.lines_direction.name",
         Key = "lines_direction",
-        Description = "1 - горизонтальные линии, 2 - вертикальные. Острия на границах фигур всегда " +
-                      "направлены вдоль линий, поэтому направление меняет вид иллюзии.",
+        DescriptionKey = "transformer.autokinetic.var.lines_direction.description",
         MinValue = HorizontalLines,
         DefaultValue = DefaultLinesDirection,
         MaxValue = VerticalLines,
@@ -57,10 +57,9 @@ public sealed class AutokineticTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable BlurPassesVariable = new()
     {
-        Name = "Сглаживание острий",
+        NameKey = "transformer.autokinetic.var.blur_passes.name",
         Key = "blur_passes",
-        Description = "Сколько раз размывается карта темноты. Чем больше значение, тем плавнее и длиннее " +
-                      "острия на границах фигур.",
+        DescriptionKey = "transformer.autokinetic.var.blur_passes.description",
         MinValue = 1,
         DefaultValue = DefaultBlurPasses,
         MaxValue = 4,
@@ -69,21 +68,22 @@ public sealed class AutokineticTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable ClipVariable = new()
     {
-        Name = "Отсечение яркости, %",
+        NameKey = "transformer.autokinetic.var.clip_percent.name",
         Key = "clip_percent",
-        Description = "Какая доля самых тёмных и самых светлых пикселей игнорируется при растяжении контраста. " +
-                      "Чем больше значение, тем контрастнее результат.",
+        DescriptionKey = "transformer.autokinetic.var.clip_percent.description",
         MinValue = 0,
         DefaultValue = DefaultClipPercent,
         MaxValue = 20,
         Step = 1
     };
 
-    public override string Name => "Автокинетическая иллюзия";
+    public AutokineticTransformer(ILocalizationService localizer) : base(localizer)
+    {
+    }
+
+    public override string Name => Localizer.Get("transformer.autokinetic.name");
     public override string Key => "autokinetic";
-    public override string Description =>
-        "Параллельные линии, которые на границах тёмных фигур сужаются до острия. Края фигур могут казаться " +
-        "пульсирующими или расползающимися. Лучше работает на контрастных силуэтах; эффект индивидуален.";
+    public override string Description => Localizer.Get("transformer.autokinetic.description");
 
     public override TransformerVariable[] AvailableCustomVariables { get; } =
         [LinesAcrossVariable, DirectionVariable, BlurPassesVariable, ClipVariable];

@@ -1,3 +1,4 @@
+using OpIlGen.Localization;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -14,19 +15,25 @@ public sealed class BlackWhiteTransformer : IImageTransformer
 
     private static readonly TransformerVariable ThresholdVariable = new()
     {
-        Name = "Порог яркости",
+        NameKey = "transformer.black_white.var.threshold.name",
         Key = "threshold",
-        Description = "Пиксели светлее этого значения становятся белыми, остальные чёрными. " +
-                      "Чем больше значение, тем темнее результат.",
+        DescriptionKey = "transformer.black_white.var.threshold.description",
         MinValue = 0,
         DefaultValue = DefaultThreshold,
         MaxValue = MaxChannel,
         Step = 1
     };
 
-    public string Name => "Чёрно-белое (2 цвета)";
+    private readonly ILocalizationService _localizer;
+
+    public BlackWhiteTransformer(ILocalizationService localizer)
+    {
+        _localizer = localizer;
+    }
+
+    public string Name => _localizer.Get("transformer.black_white.name");
     public string Key => "black_white";
-    public string Description => "Жёсткий порог яркости: каждый пиксель становится либо чёрным, либо белым.";
+    public string Description => _localizer.Get("transformer.black_white.description");
 
     public TransformerVariable[] AvailableCustomVariables { get; } = [ThresholdVariable];
 

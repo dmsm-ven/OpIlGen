@@ -1,3 +1,5 @@
+using OpIlGen.Localization;
+
 namespace OpIlGen.Services.Transformers;
 
 public sealed class CafeWallTransformer : PixelTransformerBase
@@ -33,9 +35,9 @@ public sealed class CafeWallTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable TilesAcrossVariable = new()
     {
-        Name = "Плиток по меньшей стороне",
+        NameKey = "transformer.cafe_wall.var.tiles_across.name",
         Key = "tiles_across",
-        Description = "Сколько рядов плиток умещается вдоль меньшей стороны изображения.",
+        DescriptionKey = "transformer.cafe_wall.var.tiles_across.description",
         MinValue = 6,
         DefaultValue = DefaultTilesAcross,
         MaxValue = 40,
@@ -44,10 +46,9 @@ public sealed class CafeWallTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable ContrastVariable = new()
     {
-        Name = "Контраст плиток, %",
+        NameKey = "transformer.cafe_wall.var.contrast_percent.name",
         Key = "contrast_percent",
-        Description = "Насколько сильно тёмные и светлые плитки перекрывают исходное изображение. " +
-                      "Чем больше значение, тем отчётливее иллюзия, но тем хуже видно картинку.",
+        DescriptionKey = "transformer.cafe_wall.var.contrast_percent.description",
         MinValue = 10,
         DefaultValue = DefaultContrastPercent,
         MaxValue = 100,
@@ -56,21 +57,22 @@ public sealed class CafeWallTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable RowShiftVariable = new()
     {
-        Name = "Сдвиг рядов, %",
+        NameKey = "transformer.cafe_wall.var.row_shift_percent.name",
         Key = "row_shift_percent",
-        Description = "На сколько (в процентах от размера плитки) сдвигается каждый второй ряд. " +
-                      "Иллюзия наклона швов сильнее всего при сдвиге около 25-50 %.",
+        DescriptionKey = "transformer.cafe_wall.var.row_shift_percent.description",
         MinValue = 0,
         DefaultValue = DefaultRowShiftPercent,
         MaxValue = 100,
         Step = 5
     };
 
-    public override string Name => "Кафе-стена";
+    public CafeWallTransformer(ILocalizationService localizer) : base(localizer)
+    {
+    }
+
+    public override string Name => Localizer.Get("transformer.cafe_wall.name");
     public override string Key => "cafe_wall";
-    public override string Description =>
-        "Ряды светлых и тёмных плиток, сдвинутых друг относительно друга, с серыми швами. " +
-        "Хотя все швы строго горизонтальны, кажется, что они наклонены.";
+    public override string Description => Localizer.Get("transformer.cafe_wall.description");
 
     public override TransformerVariable[] AvailableCustomVariables { get; } =
         [TilesAcrossVariable, ContrastVariable, RowShiftVariable];

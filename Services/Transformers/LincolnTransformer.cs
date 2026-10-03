@@ -1,3 +1,5 @@
+using OpIlGen.Localization;
+
 namespace OpIlGen.Services.Transformers;
 
 public sealed class LincolnTransformer : PixelTransformerBase
@@ -8,21 +10,22 @@ public sealed class LincolnTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable BlocksVariable = new()
     {
-        Name = "Блоков по длинной стороне",
+        NameKey = "transformer.lincoln.var.blocks_on_long_side.name",
         Key = "blocks_on_long_side",
-        Description = "Сколько крупных «пикселей» умещается вдоль длинной стороны изображения. " +
-                      "Чем меньше значение, тем крупнее блоки и сильнее эффект.",
+        DescriptionKey = "transformer.lincoln.var.blocks_on_long_side.description",
         MinValue = MinBlocksOnLongSide,
         DefaultValue = DefaultBlocksOnLongSide,
         MaxValue = MaxBlocksOnLongSide,
         Step = 1
     };
 
-    public override string Name => "Эффект Линкольна (пикселизация)";
+    public LincolnTransformer(ILocalizationService localizer) : base(localizer)
+    {
+    }
+
+    public override string Name => Localizer.Get("transformer.lincoln.name");
     public override string Key => "lincoln";
-    public override string Description =>
-        "Крупная пикселизация. Вблизи изображение нечитаемо, но если отойти подальше, " +
-        "уменьшить окно или прищуриться, картинка внезапно проступает.";
+    public override string Description => Localizer.Get("transformer.lincoln.description");
 
     public override TransformerVariable[] AvailableCustomVariables { get; } = [BlocksVariable];
 

@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using OpIlGen.Localization;
 using OpIlGen.Services;
 
 namespace OpIlGen.ViewModels;
@@ -8,17 +9,27 @@ public partial class TransformerVariableViewModel : ObservableObject
 {
     private readonly TransformerVariable _definition;
     private readonly Action _onValueChanged;
+    private readonly ILocalizationService _localizer;
 
-    public TransformerVariableViewModel(TransformerVariable definition, Action onValueChanged)
+    public TransformerVariableViewModel(TransformerVariable definition, Action onValueChanged, ILocalizationService localizer)
     {
         _definition = definition;
         _onValueChanged = onValueChanged;
+        _localizer = localizer;
+
+        // Название и описание обновляются при смене языка
+        localizer.LanguageChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(Name));
+            OnPropertyChanged(nameof(Description));
+        };
+
         _value = definition.DefaultValue;
     }
 
-    public string Name => _definition.Name;
+    public string Name => _localizer.GetName(_definition);
     public string Key => _definition.Key;
-    public string Description => _definition.Description;
+    public string Description => _localizer.GetDescription(_definition);
     public double MinValue => _definition.MinValue;
     public double MaxValue => _definition.MaxValue;
     public double Step => _definition.Step;
@@ -29,15 +40,5 @@ public partial class TransformerVariableViewModel : ObservableObject
     partial void OnValueChanged(double value) => _onValueChanged();
 
     /// <summary>Копия параметра с выбранным пользователем значением (для передачи в Transform).</summary>
-    public TransformerVariable ToModel() => new()
-    {
-        Name = _definition.Name,
-        Key = _definition.Key,
-        Description = _definition.Description,
-        MinValue = _definition.MinValue,
-        DefaultValue = _definition.DefaultValue,
-        MaxValue = _definition.MaxValue,
-        Step = _definition.Step,
-        Value = Value
-    };
+    public TransformerVariable ToModel() => _definition.WithValue(Value);
 }

@@ -1,3 +1,5 @@
+using OpIlGen.Localization;
+
 namespace OpIlGen.Services.Transformers;
 
 public sealed class HalftoneTransformer : PixelTransformerBase
@@ -30,10 +32,9 @@ public sealed class HalftoneTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable DotsAcrossVariable = new()
     {
-        Name = "Точек по меньшей стороне",
+        NameKey = "transformer.halftone.var.dots_across.name",
         Key = "dots_across",
-        Description = "Сколько точек растра умещается вдоль меньшей стороны изображения. " +
-                      "Меньше точек - крупнее растр и грубее картинка.",
+        DescriptionKey = "transformer.halftone.var.dots_across.description",
         MinValue = 20,
         DefaultValue = DefaultDotsAcross,
         MaxValue = 200,
@@ -42,20 +43,22 @@ public sealed class HalftoneTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable GridAngleVariable = new()
     {
-        Name = "Угол сетки, °",
+        NameKey = "transformer.halftone.var.grid_angle.name",
         Key = "grid_angle",
-        Description = "Угол наклона сетки точек. 45° - классический газетный растр, 0° - сетка параллельна краям.",
+        DescriptionKey = "transformer.halftone.var.grid_angle.description",
         MinValue = 0,
         DefaultValue = DefaultGridAngleDegrees,
         MaxValue = 90,
         Step = 5
     };
 
-    public override string Name => "Полутоновый растр (halftone)";
+    public HalftoneTransformer(ILocalizationService localizer) : base(localizer)
+    {
+    }
+
+    public override string Name => Localizer.Get("transformer.halftone.name");
     public override string Key => "halftone";
-    public override string Description =>
-        "Изображение из чёрных точек разного размера на наклонной сетке (как в газетах). " +
-        "С расстояния точки сливаются в полутона.";
+    public override string Description => Localizer.Get("transformer.halftone.description");
 
     public override TransformerVariable[] AvailableCustomVariables { get; } = [DotsAcrossVariable, GridAngleVariable];
 

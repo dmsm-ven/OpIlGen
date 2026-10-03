@@ -1,3 +1,5 @@
+using OpIlGen.Localization;
+
 namespace OpIlGen.Services.Transformers;
 
 public sealed class FloydSteinbergDitheringTransformer : PixelTransformerBase
@@ -18,10 +20,9 @@ public sealed class FloydSteinbergDitheringTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable ThresholdVariable = new()
     {
-        Name = "Порог яркости",
+        NameKey = "transformer.dither_floyd_steinberg.var.threshold.name",
         Key = "threshold",
-        Description = "Яркость, начиная с которой пиксель становится белым. " +
-                      "Чем больше значение, тем темнее результат.",
+        DescriptionKey = "transformer.dither_floyd_steinberg.var.threshold.description",
         MinValue = 0,
         DefaultValue = DefaultThreshold,
         MaxValue = BitmapHelper.White,
@@ -30,21 +31,22 @@ public sealed class FloydSteinbergDitheringTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable DiffusionVariable = new()
     {
-        Name = "Распространение ошибки, %",
+        NameKey = "transformer.dither_floyd_steinberg.var.diffusion_percent.name",
         Key = "diffusion_percent",
-        Description = "Какая доля ошибки квантования передаётся соседним пикселям. " +
-                      "100 % - классический дизеринг, меньшие значения дают более контрастное, «жёсткое» изображение.",
+        DescriptionKey = "transformer.dither_floyd_steinberg.var.diffusion_percent.description",
         MinValue = 0,
         DefaultValue = DefaultDiffusionPercent,
         MaxValue = 100,
         Step = 5
     };
 
-    public override string Name => "Дизеринг Флойда-Стейнберга";
+    public FloydSteinbergDitheringTransformer(ILocalizationService localizer) : base(localizer)
+    {
+    }
+
+    public override string Name => Localizer.Get("transformer.dither_floyd_steinberg.name");
     public override string Key => "dither_floyd_steinberg";
-    public override string Description =>
-        "Только чёрный и белый цвета, но ошибка квантования распределяется по соседним пикселям, " +
-        "поэтому глаз «видит» плавные полутона.";
+    public override string Description => Localizer.Get("transformer.dither_floyd_steinberg.description");
 
     public override TransformerVariable[] AvailableCustomVariables { get; } = [ThresholdVariable, DiffusionVariable];
 

@@ -1,3 +1,5 @@
+using OpIlGen.Localization;
+
 namespace OpIlGen.Services.Transformers;
 
 /// <summary>
@@ -32,10 +34,9 @@ public sealed class PositiveAfterimageTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable SaturationVariable = new()
     {
-        Name = "Насыщенность, %",
+        NameKey = "transformer.afterimage_positive.var.saturation_percent.name",
         Key = "saturation_percent",
-        Description = "Усиление насыщенности цветов. 100 % - без изменений. " +
-                      "Яркие насыщенные цвета дают более заметный послеобраз.",
+        DescriptionKey = "transformer.afterimage_positive.var.saturation_percent.description",
         MinValue = 100,
         DefaultValue = DefaultSaturationPercent,
         MaxValue = 250,
@@ -44,10 +45,9 @@ public sealed class PositiveAfterimageTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable ClipVariable = new()
     {
-        Name = "Отсечение яркости, %",
+        NameKey = "transformer.afterimage_positive.var.clip_percent.name",
         Key = "clip_percent",
-        Description = "Какая доля самых тёмных и самых светлых пикселей игнорируется при растяжении контраста. " +
-                      "Чем больше значение, тем контрастнее результат.",
+        DescriptionKey = "transformer.afterimage_positive.var.clip_percent.description",
         MinValue = 0,
         DefaultValue = DefaultClipPercent,
         MaxValue = 20,
@@ -56,21 +56,22 @@ public sealed class PositiveAfterimageTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable DotSizeVariable = new()
     {
-        Name = "Размер точки",
+        NameKey = "transformer.afterimage_positive.var.dot_size.name",
         Key = "dot_size",
-        Description = "Радиус точки фиксации взгляда в промилле (‰) от меньшей стороны изображения.",
+        DescriptionKey = "transformer.afterimage_positive.var.dot_size.description",
         MinValue = 5,
         DefaultValue = DefaultDotSizePermille,
         MaxValue = 50,
         Step = 1
     };
 
-    public override string Name => "Позитивный послеобраз (с закрытыми глазами)";
+    public PositiveAfterimageTransformer(ILocalizationService localizer) : base(localizer)
+    {
+    }
+
+    public override string Name => Localizer.Get("transformer.afterimage_positive.name");
     public override string Key => "afterimage_positive";
-    public override string Description =>
-        "Затемните комнату, поставьте максимальную яркость экрана и 20-30 секунд смотрите на точку в центре, " +
-        "не двигая глаз. Затем закройте глаза и прикройте их ладонями: образ несколько секунд будет виден. " +
-        "При дискомфорте прекратите.";
+    public override string Description => Localizer.Get("transformer.afterimage_positive.description");
 
     public override TransformerVariable[] AvailableCustomVariables { get; } =
         [SaturationVariable, ClipVariable, DotSizeVariable];

@@ -2,7 +2,8 @@
     x:Class="OpIlGen.Views.GifGeneratorWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="Генератор GIF-анимации"
+    xmlns:loc="clr-namespace:OpIlGen.Localization"
+    Title="{loc:Loc gif.title}"
     Width="780"
     Height="740"
     MinWidth="560"
@@ -27,10 +28,10 @@
         <!--  Что анимируем + кнопка "Склеить"  -->
         <StackPanel Grid.Row="0" Margin="0,0,0,10">
             <TextBlock>
-                <Run FontWeight="SemiBold" Text="Файл: " /><Run Text="{Binding SourceName, Mode=OneWay}" />
+                <Run FontWeight="SemiBold" Text="{loc:Loc gif.file}" /><Run Text="{Binding SourceName, Mode=OneWay}" />
             </TextBlock>
             <TextBlock Margin="0,2,0,0">
-                <Run FontWeight="SemiBold" Text="Преобразователь: " /><Run Text="{Binding TransformerName, Mode=OneWay}" />
+                <Run FontWeight="SemiBold" Text="{loc:Loc gif.transformer}" /><Run Text="{Binding TransformerName, Mode=OneWay}" />
             </TextBlock>
         </StackPanel>
 
@@ -49,7 +50,7 @@
                 Grid.Column="0"
                 Margin="0,0,10,0"
                 VerticalAlignment="Center"
-                Text="Задержка кадра, мс:" />
+                Text="{loc:Loc gif.delay}" />
 
             <!--  Minimum/Maximum должны идти раньше Value, иначе значение обрезается до 0..10  -->
             <Slider
@@ -77,22 +78,22 @@
             Grid.Row="2"
             Margin="0,0,0,10"
             Padding="8"
-            Header="Переход между кадрами"
+            Header="{loc:Loc gif.transition.header}"
             IsEnabled="{Binding IsNotBusy}">
             <StackPanel>
                 <StackPanel Orientation="Horizontal">
                     <RadioButton
                         Margin="0,0,20,0"
-                        Content="Без перехода"
+                        Content="{loc:Loc gif.transition.none}"
                         GroupName="Transition"
                         IsChecked="{Binding IsNoTransition}" />
                     <RadioButton
                         Margin="0,0,20,0"
-                        Content="Плавный переход"
+                        Content="{loc:Loc gif.transition.smooth}"
                         GroupName="Transition"
                         IsChecked="{Binding IsSmoothTransition}" />
                     <RadioButton
-                        Content="Fade-in / fade-out"
+                        Content="{loc:Loc gif.transition.fade}"
                         GroupName="Transition"
                         IsChecked="{Binding IsFadeTransition}" />
                 </StackPanel>
@@ -115,7 +116,7 @@
                         Grid.Column="0"
                         Margin="0,0,10,0"
                         VerticalAlignment="Center"
-                        Text="Кадров перехода:" />
+                        Text="{loc:Loc gif.transition.frames}" />
 
                     <Slider
                         x:Name="TransitionSlider"
@@ -143,7 +144,7 @@
         <GroupBox
             Grid.Row="3"
             Padding="6"
-            Header="Кадры">
+            Header="{loc:Loc gif.frames.header}">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -206,7 +207,7 @@
                         <TextBlock
                             Margin="0,0,0,8"
                             Foreground="{DynamicResource SecondaryTextBrush}"
-                            Text="У этого преобразователя нет настраиваемых параметров: кадры одинаковы, отличаться они могут только яркостью в режиме Fade."
+                            Text="{loc:Loc gif.no_variables_notice}"
                             TextWrapping="Wrap"
                             Visibility="{Binding HasNoVariables, Converter={StaticResource BoolToVisibility}}" />
 
@@ -252,7 +253,7 @@
                                             Command="{Binding RemoveCommand}"
                                             Content="&#xE74D;"
                                             Style="{StaticResource IconButton}"
-                                            ToolTip="Удалить кадр" />
+                                            ToolTip="{loc:Loc gif.frame.remove}" />
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -270,17 +271,17 @@
                         Grid.Column="0"
                         Margin="2"
                         Command="{Binding AddFrameCommand}"
-                        Content="Добавить кадр"
+                        Content="{loc:Loc gif.frame.add}"
                         Style="{StaticResource TextButton}"
-                        ToolTip="Добавить кадр (контрольную точку)" />
+                        ToolTip="{loc:Loc gif.frame.add.tooltip}" />
 
                     <Button
                         Grid.Column="1"
                         Margin="2"
                         Command="{Binding GenerateCommand}"
-                        Content="Сохранить в кадры в GIF"
+                        Content="{loc:Loc gif.generate}"
                         Style="{StaticResource TextButton}"
-                        ToolTip="Создать GIF из всех кадров" />
+                        ToolTip="{loc:Loc gif.generate.tooltip}" />
                 </Grid>
             </Grid>
         </GroupBox>

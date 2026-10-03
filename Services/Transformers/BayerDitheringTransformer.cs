@@ -1,3 +1,5 @@
+using OpIlGen.Localization;
+
 namespace OpIlGen.Services.Transformers;
 
 public sealed class BayerDitheringTransformer : PixelTransformerBase
@@ -21,10 +23,9 @@ public sealed class BayerDitheringTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable MatrixExponentVariable = new()
     {
-        Name = "Размер матрицы (степень двойки)",
+        NameKey = "transformer.dither_bayer.var.matrix_exponent.name",
         Key = "matrix_exponent",
-        Description = "Размер матрицы порогов: 1 = 2x2, 2 = 4x4, 3 = 8x8, 4 = 16x16. " +
-                      "Малые матрицы дают крупный регулярный узор, большие - более плавные полутона.",
+        DescriptionKey = "transformer.dither_bayer.var.matrix_exponent.description",
         MinValue = 1,
         DefaultValue = DefaultMatrixExponent,
         MaxValue = 4,
@@ -33,20 +34,22 @@ public sealed class BayerDitheringTransformer : PixelTransformerBase
 
     private static readonly TransformerVariable BiasVariable = new()
     {
-        Name = "Сдвиг порога",
+        NameKey = "transformer.dither_bayer.var.bias.name",
         Key = "bias",
-        Description = "Положительное значение делает результат темнее, отрицательное - светлее.",
+        DescriptionKey = "transformer.dither_bayer.var.bias.description",
         MinValue = -100,
         DefaultValue = DefaultBias,
         MaxValue = 100,
         Step = 5
     };
 
-    public override string Name => "Дизеринг Байера (упорядоченный)";
+    public BayerDitheringTransformer(ILocalizationService localizer) : base(localizer)
+    {
+    }
+
+    public override string Name => Localizer.Get("transformer.dither_bayer.name");
     public override string Key => "dither_bayer";
-    public override string Description =>
-        "Упорядоченный дизеринг: яркость сравнивается с повторяющейся матрицей порогов. " +
-        "Получается характерная регулярная «сетчатая» текстура, в которой тоже видны полутона.";
+    public override string Description => Localizer.Get("transformer.dither_bayer.description");
 
     public override TransformerVariable[] AvailableCustomVariables { get; } = [MatrixExponentVariable, BiasVariable];
 

@@ -1,0 +1,35 @@
+<Window x:Class="OpIlGen.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:OpIlGen.Localization"
+        Title="{loc:Loc settings.title}"
+        Width="340"
+        SizeToContent="Height"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        Foreground="{DynamicResource TextBrush}">
+
+    <StackPanel Margin="16">
+        <!-- Тема -->
+        <GroupBox Header="{loc:Loc settings.theme}" Margin="0,0,0,12" Padding="8">
+            <StackPanel>
+                <RadioButton Content="{loc:Loc settings.theme.light}"
+                             GroupName="Theme"
+                             Margin="0,0,0,6"
+                             IsChecked="{Binding IsLightTheme}" />
+                <RadioButton Content="{loc:Loc settings.theme.dark}"
+                             GroupName="Theme"
+                             IsChecked="{Binding IsDarkTheme}" />
+            </StackPanel>
+        </GroupBox>
+
+        <!-- Язык: список строится из найденных языковых файлов (Localization/*.json) -->
+        <GroupBox Header="{loc:Loc settings.language}" Padding="4">
+            <ListBox ItemsSource="{Binding Languages}"
+                     SelectedItem="{Binding SelectedLanguage}"
+                     DisplayMemberPath="DisplayName" />
+        </GroupBox>
+    </StackPanel>
+</Window>

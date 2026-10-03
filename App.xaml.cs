@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using OpIlGen.Localization;
 using OpIlGen.Services;
 using OpIlGen.Services.Transformers;
 using OpIlGen.ViewModels;
@@ -11,6 +12,10 @@ public partial class App : Application
 {
     private ServiceProvider? _serviceProvider;
 
+    /// <summary>Контейнер зависимостей (нужен расширению разметки {loc:Loc ...}).</summary>
+    public IServiceProvider Services =>
+        _serviceProvider ?? throw new InvalidOperationException("The service provider has not been created yet.");
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -19,9 +24,10 @@ public partial class App : Application
         ConfigureServices(services);
         _serviceProvider = services.BuildServiceProvider();
 
-        // Сохранённая тема применяется до создания окна
+        // Сохранённые тема и язык применяются до создания окна
         var settings = _serviceProvider.GetRequiredService<ISettingsService>();
         _serviceProvider.GetRequiredService<IThemeService>().Apply(settings.Current.Theme);
+        _serviceProvider.GetRequiredService<ILocalizationService>().SetLanguage(settings.Current.Language);
 
         // Главное окно создаётся через DI
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
@@ -31,6 +37,7 @@ public partial class App : Application
     private static void ConfigureServices(IServiceCollection services)
     {
         // Сервисы
+        services.AddSingleton<ILocalizationService>(_ => LocalizationService.CreateFromEmbeddedResources());
         services.AddSingleton<IFileDialogService, FileDialogService>();
         services.AddSingleton<IImageService, ImageService>();
         services.AddSingleton<IFullScreenService, FullScreenService>();
@@ -39,6 +46,7 @@ public partial class App : Application
         services.AddSingleton<IGifGeneratorWindowService, GifGeneratorWindowService>();
         services.AddSingleton<IThemeService, ThemeService>();
         services.AddSingleton<ISettingsService, SettingsService>();
+        services.AddSingleton<ISettingsWindowService, SettingsWindowService>();
 
         // Преобразователи изображений. Чтобы добавить новую иллюзию -
         // создайте класс, реализующий IImageTransformer, и зарегистрируйте его здесь.
@@ -58,6 +66,8 @@ public partial class App : Application
         // ViewModel и окна
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
+        services.AddTransient<SettingsViewModel>();
+        services.AddTransient<SettingsWindow>();
     }
 
     protected override void OnExit(ExitEventArgs e)

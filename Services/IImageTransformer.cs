@@ -38,6 +38,12 @@ public class TransformerVariable
     /// <summary>Подробное описание: за что отвечает параметр.</summary>
     public string Description { get; set; } = string.Empty;
 
+    /// <summary>Ключ строки локализации названия. Если не задан, используется <see cref="Name"/>.</summary>
+    public string NameKey { get; set; } = string.Empty;
+
+    /// <summary>Ключ строки локализации описания. Если не задан, используется <see cref="Description"/>.</summary>
+    public string DescriptionKey { get; set; } = string.Empty;
+
     public double MinValue { get; set; }
 
     /// <summary>Значение по умолчанию (то же, что в const-переменных преобразователя).</summary>
@@ -61,6 +67,8 @@ public class TransformerVariable
         Name = Name,
         Key = Key,
         Description = Description,
+        NameKey = NameKey,
+        DescriptionKey = DescriptionKey,
         MinValue = MinValue,
         DefaultValue = DefaultValue,
         MaxValue = MaxValue,

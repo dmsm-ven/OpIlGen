@@ -1,3 +1,4 @@
+using OpIlGen.Localization;
 using System.Windows.Media.Imaging;
 
 namespace OpIlGen.Services.Transformers;
@@ -8,6 +9,14 @@ namespace OpIlGen.Services.Transformers;
 /// </summary>
 public abstract class PixelTransformerBase : IImageTransformer
 {
+    protected PixelTransformerBase(ILocalizationService localizer)
+    {
+        Localizer = localizer;
+    }
+
+    /// <summary>Локализация: названия и описания берутся по ключам (transformer.&lt;key&gt;.name и т.д.).</summary>
+    protected ILocalizationService Localizer { get; }
+
     public abstract string Name { get; }
     public abstract string Key { get; }
     public abstract string Description { get; }

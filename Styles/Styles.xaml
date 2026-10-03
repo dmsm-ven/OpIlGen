@@ -103,24 +103,6 @@
         </Setter>
     </Style>
 
-    <!-- Кнопки тем: активная тема подсвечена -->
-    <Style x:Key="LightThemeButton" TargetType="Button" BasedOn="{StaticResource IconButton}">
-        <Style.Triggers>
-            <DataTrigger Binding="{Binding IsDarkTheme}" Value="False">
-                <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
-                <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}" />
-            </DataTrigger>
-        </Style.Triggers>
-    </Style>
-    <Style x:Key="DarkThemeButton" TargetType="Button" BasedOn="{StaticResource IconButton}">
-        <Style.Triggers>
-            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
-                <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}" />
-            </DataTrigger>
-        </Style.Triggers>
-    </Style>
-
     <!-- Кнопка с текстом: прозрачная, со скруглёнными углами и рамкой -->
     <Style x:Key="TextButton" TargetType="Button">
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />

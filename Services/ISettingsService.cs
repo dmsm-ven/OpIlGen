@@ -69,4 +69,7 @@ public sealed class SettingsService : ISettingsService
 public sealed class AppSettings
 {
     public AppTheme Theme { get; set; } = AppTheme.Light;
+
+    /// <summary>Код языка интерфейса (ru, en...).</summary>
+    public string Language { get; set; } = OpIlGen.Localization.LocalizationService.DefaultLanguageCode;
 }

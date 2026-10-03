@@ -1,4 +1,5 @@
 using Microsoft.Win32;
+using OpIlGen.Localization;
 
 namespace OpIlGen.Services;
 
@@ -10,12 +11,19 @@ public interface IFileDialogService
 
 public sealed class FileDialogService : IFileDialogService
 {
+    private readonly ILocalizationService _localizer;
+
+    public FileDialogService(ILocalizationService localizer)
+    {
+        _localizer = localizer;
+    }
+
     public string? PickImageFile()
     {
         var dialog = new OpenFileDialog
         {
-            Title = "Выберите изображение",
-            Filter = "Изображения (*.jpg;*.jpeg;*.png)|*.jpg;*.jpeg;*.png"
+            Title = _localizer.Get("dialog.select_image.title"),
+            Filter = _localizer.Get("dialog.select_image.filter")
         };
 
         return dialog.ShowDialog() == true ? dialog.FileName : null;

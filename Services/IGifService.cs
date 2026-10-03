@@ -1,4 +1,5 @@
-﻿using OpIlGen.Services.Transformers;
+﻿using OpIlGen.Localization;
+using OpIlGen.Services.Transformers;
 using System.IO;
 using System.Windows.Media.Imaging;
 
@@ -21,10 +22,12 @@ public sealed class GifService : IGifService
     private const string GifFolderName = "gif";
 
     private readonly IImageService _imageService;
+    private readonly ILocalizationService _localizer;
 
-    public GifService(IImageService imageService)
+    public GifService(IImageService imageService, ILocalizationService localizer)
     {
         _imageService = imageService;
+        _localizer = localizer;
     }
 
     public string Save(IEnumerable<BitmapSource> frames, string sourcePath, int frameDelayMs)
@@ -50,7 +53,7 @@ public sealed class GifService : IGifService
 
                 if (encoder is null)
                 {
-                    throw new InvalidOperationException("Нет кадров для создания GIF.");
+                    throw new InvalidOperationException(_localizer.Get("gif.error.no_frames"));
                 }
 
                 encoder.Finish();

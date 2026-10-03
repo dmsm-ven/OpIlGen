@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using OpIlGen.Localization;
 using OpIlGen.Services;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -31,19 +32,23 @@ public partial class GifGeneratorViewModel : ObservableObject
     private readonly IImageService _imageService;
     private readonly IGifService _gifService;
     private readonly IShellService _shell;
+    private readonly ILocalizationService _localizer;
 
     public GifGeneratorViewModel(
         string sourcePath,
         IImageTransformer transformer,
         IImageService imageService,
         IGifService gifService,
-        IShellService shellService)
+        IShellService shellService,
+        ILocalizationService localizer)
     {
         _sourcePath = sourcePath;
         _transformer = transformer;
         _imageService = imageService;
         _gifService = gifService;
         _shell = shellService;
+        _localizer = localizer;
+        _status = localizer.Get("gif.status.initial");
 
         Frames.CollectionChanged += (_, _) => OnPropertyChanged(nameof(Summary));
     }
@@ -53,7 +58,9 @@ public partial class GifGeneratorViewModel : ObservableObject
     public string TransformerName => _transformer.Name;
 
     /// <summary>Столбцы таблицы: параметры преобразователя.</summary>
-    public IReadOnlyList<TransformerVariable> Columns => _transformer.AvailableCustomVariables;
+    public IReadOnlyList<GifColumn> Columns => _transformer.AvailableCustomVariables
+        .Select(v => new GifColumn(_localizer.GetName(v), _localizer.GetDescription(v), v.MinValue, v.MaxValue))
+        .ToArray();
 
     /// <summary>У преобразователя нет параметров - кадры отличаются только яркостью в режиме Fade.</summary>
     public bool HasNoVariables => _transformer.AvailableCustomVariables.Length == 0;
@@ -99,14 +106,14 @@ public partial class GifGeneratorViewModel : ObservableObject
 
     public string TransitionHint => Transition switch
     {
-        GifTransition.Smooth => "Между соседними кадрами добавляются промежуточные: значения параметров меняются плавно.",
-        GifTransition.Fade => "Каждый кадр плавно появляется из чёрного и гаснет в чёрный. Анимация зацикливается через чёрный.",
-        _ => "Показываются только заданные кадры, без промежуточных."
+        GifTransition.Smooth => _localizer.Get("gif.transition.hint.smooth"),
+        GifTransition.Fade => _localizer.Get("gif.transition.hint.fade"),
+        _ => _localizer.Get("gif.transition.hint.none")
     };
 
     /// <summary>Сколько кадров получится в итоговом GIF.</summary>
     public string Summary =>
-        $"Кадров в GIF: {GifFramePlanner.CountFrames(Frames.Count, Transition, (int)Math.Round(TransitionFrames))}";
+        _localizer.Format("gif.summary", GifFramePlanner.CountFrames(Frames.Count, Transition, (int)Math.Round(TransitionFrames)));
 
     // ---- Состояние ----
 
@@ -118,7 +125,7 @@ public partial class GifGeneratorViewModel : ObservableObject
     public bool IsNotBusy => !IsBusy;
 
     [ObservableProperty]
-    private string _status = "Нажмите «Добавить» чтобы создать кадр, и задайте значения параметров.";
+    private string _status = string.Empty;
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private void AddFrame()
@@ -128,7 +135,7 @@ public partial class GifGeneratorViewModel : ObservableObject
         Frames.Add(new GifFrameViewModel(_transformer.AvailableCustomVariables, previous, RemoveFrame));
 
         Renumber();
-        Status = $"Кадров: {Frames.Count}. Нажмите «Склеить», когда всё готово.";
+        Status = _localizer.Format("gif.status.frames_added", Frames.Count);
     }
 
     private void RemoveFrame(GifFrameViewModel frame)
@@ -136,7 +143,7 @@ public partial class GifGeneratorViewModel : ObservableObject
         Frames.Remove(frame);
 
         Renumber();
-        Status = $"Кадров: {Frames.Count}.";
+        Status = _localizer.Format("gif.status.frames", Frames.Count);
     }
 
     private void Renumber()
@@ -153,7 +160,7 @@ public partial class GifGeneratorViewModel : ObservableObject
         int requiredFrames = Transition == GifTransition.Fade ? MinFramesForFade : MinFrames;
         if (Frames.Count < requiredFrames)
         {
-            Status = $"Нужно минимум кадров: {requiredFrames}. Добавьте их кнопкой «+».";
+            Status = _localizer.Format("gif.status.need_frames", requiredFrames);
             return;
         }
 
@@ -163,7 +170,7 @@ public partial class GifGeneratorViewModel : ObservableObject
         var keyframes = Frames.Select(f => f.ToModels()).ToArray();
         var plan = GifFramePlanner.Plan(keyframes, Transition, (int)Math.Round(TransitionFrames));
         int delay = (int)Math.Round(FrameDelayMs);
-        IProgress<int> progress = new Progress<int>(done => Status = $"Обработка кадра {done} из {plan.Count}...");
+        IProgress<int> progress = new Progress<int>(done => Status = _localizer.Format("gif.status.processing", done, plan.Count));
 
         try
         {
@@ -192,11 +199,11 @@ public partial class GifGeneratorViewModel : ObservableObject
                 return _gifService.Save(frames, _sourcePath, delay);
             });
 
-            Status = $"Готово: {gifPath}";
+            Status = _localizer.Format("gif.status.done", gifPath);
         }
         catch (Exception ex)
         {
-            Status = $"Ошибка: {ex.Message}";
+            Status = _localizer.Format("status.error", ex.Message);
         }
         finally
         {
@@ -291,3 +298,6 @@ public sealed class GifCellViewModel : ObservableObject
 
     public TransformerVariable ToModel() => _definition.WithValue(_value);
 }
+
+/// <summary>Заголовок столбца таблицы: параметр преобразователя (текст уже на текущем языке).</summary>
+public sealed record GifColumn(string Name, string Description, double MinValue, double MaxValue);
