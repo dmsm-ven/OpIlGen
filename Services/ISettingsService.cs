@@ -74,6 +74,15 @@ public sealed class AppSettings
     /// <summary>Число обновлений изображения в секунду в окне музыки.</summary>
     public double MusicFps { get; set; } = 10;
 
+    /// <summary>
+    /// Привязки параметров к звуку в окне музыки: ключ преобразователя -> (ключ параметра -> название источника звука).
+    /// Хранятся строками, чтобы переименование значений AudioFeature не ломало загрузку всех настроек.
+    /// </summary>
+    public Dictionary<string, Dictionary<string, string>> MusicMappings { get; set; } = new();
+
+    /// <summary>Путь к последнему выбранному музыкальному файлу.</summary>
+    public string? MusicLastTrack { get; set; }
+
     public AppTheme Theme { get; set; } = AppTheme.Light;
 
     /// <summary>Код языка интерфейса (ru, en...).</summary>

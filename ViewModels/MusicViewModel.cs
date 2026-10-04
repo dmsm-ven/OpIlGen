@@ -85,6 +85,7 @@ public partial class MusicViewModel : ObservableObject
             .ToArray();
         Mappings = new ObservableCollection<MusicMappingRowViewModel>(
             transformer.AvailableCustomVariables.Select(v => new MusicMappingRowViewModel(v, localizer, options)));
+        RestoreMappings();
 
         _player.Volume = PositionToGain(_volumePosition);
 
@@ -270,6 +271,21 @@ public partial class MusicViewModel : ObservableObject
             return;
         }
 
+        await LoadTrackAsync(path);
+    }
+
+    /// <summary>Открывает последний выбранный трек (если файл ещё существует). Вызывается при открытии окна.</summary>
+    public async Task InitializeAsync()
+    {
+        var path = _settings.Current.MusicLastTrack;
+        if (!string.IsNullOrEmpty(path) && File.Exists(path))
+        {
+            await LoadTrackAsync(path);
+        }
+    }
+
+    private async Task LoadTrackAsync(string path)
+    {
         StopInternal();
         _analysisCts?.Cancel();
         var cts = _analysisCts = new CancellationTokenSource();
@@ -288,6 +304,7 @@ public partial class MusicViewModel : ObservableObject
             }
 
             Analysis = result;
+            _settings.Current.MusicLastTrack = path;
             DurationSeconds = result.Duration.TotalSeconds;
             SetPositionFromPlayer(0);
             Status = _localizer.Get("music.status.ready");
@@ -430,10 +447,47 @@ public partial class MusicViewModel : ObservableObject
         return current;
     }
 
+    /// <summary>Возвращает привязки параметров к звуку, сохранённые для этого преобразователя (не зависит от изображения).</summary>
+    private void RestoreMappings()
+    {
+        if (!_settings.Current.MusicMappings.TryGetValue(Transformer.Key, out var saved))
+        {
+            return;
+        }
+
+        foreach (var row in Mappings)
+        {
+            if (saved.TryGetValue(row.Variable.Key, out var name)
+                && Enum.TryParse<AudioFeature>(name, out var feature)
+                && Enum.IsDefined(feature))
+            {
+                row.SelectedSource = feature;
+            }
+        }
+    }
+
+    /// <summary>Запоминает привязки для этого преобразователя. Параметры без привязки не хранятся.</summary>
+    private void SaveMappings()
+    {
+        var bound = Mappings
+            .Where(r => r.SelectedSource != AudioFeature.None)
+            .ToDictionary(r => r.Variable.Key, r => r.SelectedSource.ToString());
+
+        if (bound.Count > 0)
+        {
+            _settings.Current.MusicMappings[Transformer.Key] = bound;
+        }
+        else
+        {
+            _settings.Current.MusicMappings.Remove(Transformer.Key);
+        }
+    }
+
     /// <summary>Вызывается при закрытии окна: музыка не должна играть дальше.</summary>
     public void Shutdown()
     {
-        // FPS и громкость пишем на диск один раз при закрытии, а не на каждое движение ползунка
+        // FPS, громкость и привязки пишем на диск один раз при закрытии, а не на каждое изменение
+        SaveMappings();
         _settings.Save();
 
         _analysisCts?.Cancel();

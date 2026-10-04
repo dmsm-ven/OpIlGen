@@ -14,6 +14,9 @@ public partial class MusicWindow : Window
         _viewModel = viewModel;
         DataContext = viewModel;
         Closed += (_, _) => viewModel.Shutdown();
+
+        // Подхватываем последний трек, как только окно показано
+        Loaded += async (_, _) => await viewModel.InitializeAsync();
     }
 
     // Пока пользователь тянет ползунок позиции, таймер не должен его двигать
