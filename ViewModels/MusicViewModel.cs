@@ -19,7 +19,16 @@ public partial class MusicViewModel : ObservableObject
     /// <summary>Картинка уменьшается до этой длинной стороны, чтобы пересчёт успевал ~10 раз в секунду.</summary>
     private const int PreviewMaxSide = 640;
 
-    private const int UpdateIntervalMs = 100;
+    /// <summary>Допустимые значения FPS (число обновлений изображения в секунду).</summary>
+    public const double MinFps = 1;
+    public const double MaxFps = 30;
+    private const double DefaultFps = 10;
+
+    /// <summary>
+    /// Коэффициенты сглаживания ниже подобраны для этого FPS. При другом FPS они пересчитываются,
+    /// чтобы скорость реакции по времени оставалась той же.
+    /// </summary>
+    private const double SmoothingReferenceFps = 10;
 
     /// <summary>Сглаживание: доля пути к новому уровню за один шаг (быстро растёт, медленнее спадает).</summary>
     private const double AttackFactor = 0.7;
@@ -44,6 +53,8 @@ public partial class MusicViewModel : ObservableObject
     private BitmapSource? _baseImage;
     private CancellationTokenSource? _analysisCts;
     private bool _isRendering;
+    private bool _isSeeking;
+    private bool _isUpdatingPosition;
 
     public MusicViewModel(
         string sourcePath,
@@ -69,9 +80,16 @@ public partial class MusicViewModel : ObservableObject
 
         _player.Volume = PositionToGain(DefaultVolumePosition);
 
-        _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(UpdateIntervalMs) };
+        _timer = new DispatcherTimer { Interval = FpsToInterval(Fps) };
         _timer.Tick += OnTimerTick;
 
+        _player.MediaOpened += (_, _) =>
+        {
+            if (_player.NaturalDuration.HasTimeSpan)
+            {
+                DurationSeconds = _player.NaturalDuration.TimeSpan.TotalSeconds;
+            }
+        };
         _player.MediaFailed += (_, e) =>
         {
             StopInternal();
@@ -137,6 +155,67 @@ public partial class MusicViewModel : ObservableObject
     private static double PositionToGain(double position)
         => position <= 0 ? 0 : Math.Pow(10, -VolumeRangeDb * (1 - Math.Min(position, 1)) / 20);
 
+    /// <summary>Сколько раз в секунду обновляется изображение.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(FpsText))]
+    private double _fps = DefaultFps;
+
+    public string FpsText => string.Format("{0:0}", Fps);
+
+    partial void OnFpsChanged(double value) => _timer.Interval = FpsToInterval(value);
+
+    private static TimeSpan FpsToInterval(double fps)
+        => TimeSpan.FromMilliseconds(1000.0 / Math.Clamp(Math.Round(fps), MinFps, MaxFps));
+
+    /// <summary>Текущая позиция трека в секундах (ползунок позиции).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PositionText))]
+    private double _positionSeconds;
+
+    /// <summary>Длительность трека в секундах (максимум ползунка позиции).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PositionText))]
+    private double _durationSeconds;
+
+    public string PositionText => $"{FormatTime(PositionSeconds)} / {FormatTime(DurationSeconds)}";
+
+    private static string FormatTime(double seconds)
+    {
+        var time = TimeSpan.FromSeconds(Math.Max(0, seconds));
+        return time.TotalHours >= 1 ? time.ToString(@"h\:mm\:ss") : time.ToString(@"m\:ss");
+    }
+
+    partial void OnPositionSecondsChanged(double value)
+    {
+        // Значение обновил таймер или идёт перетаскивание (позиция применится в конце) - плеер не трогаем
+        if (_isUpdatingPosition || _isSeeking || !IsPlaying)
+        {
+            return;
+        }
+
+        _player.Position = TimeSpan.FromSeconds(value);
+    }
+
+    /// <summary>Пользователь начал тянуть ползунок позиции: таймер временно не двигает его.</summary>
+    public void BeginSeek() => _isSeeking = true;
+
+    /// <summary>Пользователь отпустил ползунок позиции: перематываем трек.</summary>
+    public void EndSeek()
+    {
+        _isSeeking = false;
+        if (IsPlaying)
+        {
+            _player.Position = TimeSpan.FromSeconds(PositionSeconds);
+        }
+    }
+
+    private void SetPositionFromPlayer(double seconds)
+    {
+        _isUpdatingPosition = true;
+        PositionSeconds = seconds;
+        _isUpdatingPosition = false;
+    }
+
     public string MusicName => string.IsNullOrEmpty(MusicPath) ? "-" : Path.GetFileName(MusicPath);
 
     private void LoadBaseImage()
@@ -193,6 +272,8 @@ public partial class MusicViewModel : ObservableObject
             }
 
             Analysis = result;
+            DurationSeconds = result.Duration.TotalSeconds;
+            SetPositionFromPlayer(0);
             Status = _localizer.Get("music.status.ready");
         }
         catch (OperationCanceledException)
@@ -247,6 +328,8 @@ public partial class MusicViewModel : ObservableObject
         _player.Stop();
         _player.Close();
         IsPlaying = false;
+        _isSeeking = false;
+        SetPositionFromPlayer(0);
 
         // Возвращаем картинку к значениям по умолчанию
         if (_baseImage is not null)
@@ -262,6 +345,12 @@ public partial class MusicViewModel : ObservableObject
 
     private async void OnTimerTick(object? sender, EventArgs e)
     {
+        // Ползунок позиции двигается на каждом тике, даже если кадр изображения пропущен
+        if (IsPlaying && !_isSeeking)
+        {
+            SetPositionFromPlayer(_player.Position.TotalSeconds);
+        }
+
         // Пока не досчитан предыдущий кадр, новый пропускаем
         if (_isRendering || Analysis is null || _baseImage is null || !IsPlaying)
         {
@@ -319,6 +408,7 @@ public partial class MusicViewModel : ObservableObject
         double factor = target > current
             ? (isBeat ? BeatAttackFactor : AttackFactor)
             : (isBeat ? BeatReleaseFactor : ReleaseFactor);
+        factor = 1 - Math.Pow(1 - factor, SmoothingReferenceFps / Math.Clamp(Math.Round(Fps), MinFps, MaxFps));
         current += (target - current) * factor;
         _smoothed[feature] = current;
         return current;

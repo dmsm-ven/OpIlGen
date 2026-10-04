@@ -160,5 +160,8 @@
   "music.source.brightness": "Sound brightness",
   "music.volume.mute": "Muted",
   "music.volume.db_format": "{0:0} dB",
-  "music.volume.tooltip": "Playback volume (logarithmic scale). Does not affect sound analysis or the image."
+  "music.volume.tooltip": "Playback volume (logarithmic scale). Does not affect sound analysis or the image.",
+  "music.fps": "FPS:",
+  "music.fps.tooltip": "How many times per second the image is updated. Higher is smoother but heavier on the CPU.",
+  "music.position.tooltip": "Track position. You can seek during playback."
 }

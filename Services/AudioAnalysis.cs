@@ -48,6 +48,9 @@ public sealed class AudioTrackAnalysis
         _frameOffsetSeconds = frameOffsetSeconds;
     }
 
+    /// <summary>Длительность трека (по числу проанализированных кадров).</summary>
+    public TimeSpan Duration => TimeSpan.FromSeconds(_levels.Values.Select(v => v.Length).DefaultIfEmpty(0).Max() * _hopSeconds);
+
     /// <summary>Уровень характеристики (0..1) в момент <paramref name="position"/> трека.</summary>
     public double GetLevel(AudioFeature feature, TimeSpan position)
     {
