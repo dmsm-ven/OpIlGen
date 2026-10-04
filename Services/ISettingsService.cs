@@ -68,6 +68,12 @@ public sealed class SettingsService : ISettingsService
 /// <summary>Настройки приложения, сохраняемые между запусками.</summary>
 public sealed class AppSettings
 {
+    /// <summary>Положение ползунка громкости в окне музыки (0..1, логарифмическая шкала).</summary>
+    public double MusicVolumePosition { get; set; } = 0.9;
+
+    /// <summary>Число обновлений изображения в секунду в окне музыки.</summary>
+    public double MusicFps { get; set; } = 10;
+
     public AppTheme Theme { get; set; } = AppTheme.Light;
 
     /// <summary>Код языка интерфейса (ru, en...).</summary>

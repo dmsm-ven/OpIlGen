@@ -42,9 +42,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -60,38 +58,8 @@
                 </TextBlock>
             </StackPanel>
 
-            <!--  FPS: сколько раз в секунду обновляется изображение  -->
-            <Grid Grid.Row="1" Margin="0,0,0,10" ToolTip="{loc:Loc music.fps.tooltip}">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="40" />
-                </Grid.ColumnDefinitions>
-                <TextBlock
-                    Grid.Column="0"
-                    Margin="0,0,10,0"
-                    VerticalAlignment="Center"
-                    Text="{loc:Loc music.fps}" />
-                <!--  Minimum/Maximum должны идти раньше Value (границы совпадают с MusicViewModel.MinFps/MaxFps)  -->
-                <Slider
-                    Grid.Column="1"
-                    VerticalAlignment="Center"
-                    IsSnapToTickEnabled="True"
-                    LargeChange="5"
-                    Maximum="30"
-                    Minimum="1"
-                    SmallChange="1"
-                    TickFrequency="1"
-                    Value="{Binding Fps, Mode=TwoWay}" />
-                <TextBlock
-                    Grid.Column="2"
-                    VerticalAlignment="Center"
-                    Text="{Binding FpsText}"
-                    TextAlignment="Right" />
-            </Grid>
-
             <!--  Выбор музыкального файла  -->
-            <Grid Grid.Row="2" Margin="0,0,0,10">
+            <Grid Grid.Row="1" Margin="0,0,0,10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -112,7 +80,7 @@
 
             <!--  Зависимости: параметр преобразователя <- характеристика звука  -->
             <GroupBox
-                Grid.Row="3"
+                Grid.Row="2"
                 Header="{loc:Loc music.mapping.header}"
                 Padding="6"
                 Visibility="{Binding HasMappings, Converter={StaticResource BoolToVisibility}}">
@@ -140,54 +108,65 @@
                 </ScrollViewer>
             </GroupBox>
 
-            <!--  Громкость плеера (логарифмическая шкала); на анализ звука не влияет  -->
-            <Grid Grid.Row="4" Margin="0,10,0,0" ToolTip="{loc:Loc music.volume.tooltip}">
+            <!--
+                Громкость, позиция трека и FPS в одной сетке: одинаковые колонки,
+                поэтому все три ползунка одной длины независимо от подписи справа
+            -->
+            <Grid Grid.Row="3" Margin="0,10,0,0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="40" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="72" />
+                    <ColumnDefinition Width="92" />
                 </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!--  Громкость плеера (логарифмическая шкала); на анализ звука не влияет  -->
                 <TextBlock
+                    Grid.Row="0"
                     Grid.Column="0"
-                    Margin="0,0,8,0"
                     VerticalAlignment="Center"
                     FontFamily="Segoe MDL2 Assets"
                     FontSize="16"
-                    Text="&#xE767;" />
+                    Text="&#xE767;"
+                    ToolTip="{loc:Loc music.volume.tooltip}" />
                 <!--  Minimum/Maximum должны идти раньше Value  -->
                 <Slider
+                    Grid.Row="0"
                     Grid.Column="1"
+                    Margin="0,0,0,6"
                     VerticalAlignment="Center"
                     IsMoveToPointEnabled="True"
                     LargeChange="0.1"
                     Maximum="1"
                     Minimum="0"
                     SmallChange="0.01"
+                    ToolTip="{loc:Loc music.volume.tooltip}"
                     Value="{Binding VolumePosition, Mode=TwoWay}" />
                 <TextBlock
+                    Grid.Row="0"
                     Grid.Column="2"
                     VerticalAlignment="Center"
                     FontSize="11"
                     Text="{Binding VolumeText}"
                     TextAlignment="Right" />
-            </Grid>
 
-            <!--  Позиция трека: тянуть можно во время воспроизведения  -->
-            <Grid Grid.Row="5" Margin="0,6,0,0" ToolTip="{loc:Loc music.position.tooltip}">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="92" />
-                </Grid.ColumnDefinitions>
+                <!--  Позиция трека: тянуть можно во время воспроизведения  -->
                 <TextBlock
+                    Grid.Row="1"
                     Grid.Column="0"
-                    Margin="0,0,8,0"
                     VerticalAlignment="Center"
                     FontFamily="Segoe MDL2 Assets"
                     FontSize="16"
-                    Text="&#xE916;" />
+                    Text="&#xE916;"
+                    ToolTip="{loc:Loc music.position.tooltip}" />
                 <Slider
+                    Grid.Row="1"
                     Grid.Column="1"
+                    Margin="0,0,0,6"
                     VerticalAlignment="Center"
                     IsEnabled="{Binding IsPlaying}"
                     IsMoveToPointEnabled="True"
@@ -197,17 +176,46 @@
                     SmallChange="1"
                     Thumb.DragCompleted="PositionSlider_DragCompleted"
                     Thumb.DragStarted="PositionSlider_DragStarted"
+                    ToolTip="{loc:Loc music.position.tooltip}"
                     Value="{Binding PositionSeconds, Mode=TwoWay}" />
                 <TextBlock
+                    Grid.Row="1"
                     Grid.Column="2"
                     VerticalAlignment="Center"
                     FontSize="11"
                     Text="{Binding PositionText}"
                     TextAlignment="Right" />
-            </Grid>
 
+                <!--  FPS: сколько раз в секунду обновляется изображение  -->
+                <TextBlock
+                    Grid.Row="2"
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    Text="{loc:Loc music.fps}"
+                    ToolTip="{loc:Loc music.fps.tooltip}" />
+                <!--  Границы совпадают с MusicViewModel.MinFps / MaxFps  -->
+                <Slider
+                    Grid.Row="2"
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    IsSnapToTickEnabled="True"
+                    LargeChange="5"
+                    Maximum="30"
+                    Minimum="1"
+                    SmallChange="1"
+                    TickFrequency="1"
+                    ToolTip="{loc:Loc music.fps.tooltip}"
+                    Value="{Binding Fps, Mode=TwoWay}" />
+                <TextBlock
+                    Grid.Row="2"
+                    Grid.Column="2"
+                    VerticalAlignment="Center"
+                    FontSize="11"
+                    Text="{Binding FpsText}"
+                    TextAlignment="Right" />
+            </Grid>
             <!--  Play / Stop  -->
-            <StackPanel Grid.Row="6" Margin="0,10,0,10" Orientation="Horizontal">
+            <StackPanel Grid.Row="4" Margin="0,10,0,10" Orientation="Horizontal">
                 <Button
                     Margin="0,0,8,0"
                     Padding="16,4"
@@ -221,7 +229,7 @@
                     Style="{StaticResource TextButton}" />
             </StackPanel>
 
-            <StackPanel Grid.Row="7">
+            <StackPanel Grid.Row="5">
                 <ProgressBar
                     Height="6"
                     Margin="0,0,0,6"

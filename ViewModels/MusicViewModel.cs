@@ -46,6 +46,7 @@ public partial class MusicViewModel : ObservableObject
     private readonly IImageService _imageService;
     private readonly IAudioAnalysisService _analysisService;
     private readonly ILocalizationService _localizer;
+    private readonly ISettingsService _settings;
     private readonly MediaPlayer _player = new();
     private readonly DispatcherTimer _timer;
     private readonly Dictionary<AudioFeature, double> _smoothed = new();
@@ -62,6 +63,7 @@ public partial class MusicViewModel : ObservableObject
         IFileDialogService fileDialog,
         IImageService imageService,
         IAudioAnalysisService analysisService,
+        ISettingsService settings,
         ILocalizationService localizer)
     {
         SourcePath = sourcePath;
@@ -70,6 +72,12 @@ public partial class MusicViewModel : ObservableObject
         _imageService = imageService;
         _analysisService = analysisService;
         _localizer = localizer;
+        _settings = settings;
+
+        // Сохранённые FPS и громкость (задаём поля напрямую: таймера и плеера ещё нет в нужном состоянии)
+        _fps = Math.Clamp(Math.Round(settings.Current.MusicFps), MinFps, MaxFps);
+        _volumePosition = Math.Clamp(settings.Current.MusicVolumePosition, 0, 1);
+
         _status = localizer.Get("music.status.initial");
 
         var options = Enum.GetValues<AudioFeature>()
@@ -78,7 +86,7 @@ public partial class MusicViewModel : ObservableObject
         Mappings = new ObservableCollection<MusicMappingRowViewModel>(
             transformer.AvailableCustomVariables.Select(v => new MusicMappingRowViewModel(v, localizer, options)));
 
-        _player.Volume = PositionToGain(DefaultVolumePosition);
+        _player.Volume = PositionToGain(_volumePosition);
 
         _timer = new DispatcherTimer { Interval = FpsToInterval(Fps) };
         _timer.Tick += OnTimerTick;
@@ -149,7 +157,11 @@ public partial class MusicViewModel : ObservableObject
         ? _localizer.Get("music.volume.mute")
         : string.Format(_localizer.Get("music.volume.db_format"), -VolumeRangeDb * (1 - VolumePosition));
 
-    partial void OnVolumePositionChanged(double value) => _player.Volume = PositionToGain(value);
+    partial void OnVolumePositionChanged(double value)
+    {
+        _player.Volume = PositionToGain(value);
+        _settings.Current.MusicVolumePosition = value;
+    }
 
     /// <summary>Положение ползунка (0..1) -> множитель громкости: 0 = тишина, иначе от -60 дБ до 0 дБ.</summary>
     private static double PositionToGain(double position)
@@ -162,7 +174,11 @@ public partial class MusicViewModel : ObservableObject
 
     public string FpsText => string.Format("{0:0}", Fps);
 
-    partial void OnFpsChanged(double value) => _timer.Interval = FpsToInterval(value);
+    partial void OnFpsChanged(double value)
+    {
+        _timer.Interval = FpsToInterval(value);
+        _settings.Current.MusicFps = value;
+    }
 
     private static TimeSpan FpsToInterval(double fps)
         => TimeSpan.FromMilliseconds(1000.0 / Math.Clamp(Math.Round(fps), MinFps, MaxFps));
@@ -417,6 +433,9 @@ public partial class MusicViewModel : ObservableObject
     /// <summary>Вызывается при закрытии окна: музыка не должна играть дальше.</summary>
     public void Shutdown()
     {
+        // FPS и громкость пишем на диск один раз при закрытии, а не на каждое движение ползунка
+        _settings.Save();
+
         _analysisCts?.Cancel();
         _timer.Stop();
         _player.Stop();
