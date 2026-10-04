@@ -96,6 +96,31 @@
                                         ItemsSource="{Binding Options}"
                                         SelectedValue="{Binding SelectedSource}"
                                         SelectedValuePath="Source" />
+
+                                    <!--  Фиксированное значение: слайдер и точный ввод числа (Enter или потеря фокуса применяют ввод)  -->
+                                    <Grid Margin="0,6,0,0" Visibility="{Binding IsFixed, Converter={StaticResource BoolToVisibility}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <!--  Minimum/Maximum должны идти раньше Value  -->
+                                        <Slider
+                                            Grid.Column="0"
+                                            VerticalAlignment="Center"
+                                            IsSnapToTickEnabled="True"
+                                            Maximum="{Binding Variable.MaxValue}"
+                                            Minimum="{Binding Variable.MinValue}"
+                                            TickFrequency="{Binding Variable.Step}"
+                                            Value="{Binding FixedValue, Delay=150}" />
+                                        <TextBox
+                                            Grid.Column="1"
+                                            Width="64"
+                                            Margin="8,0,0,0"
+                                            VerticalContentAlignment="Center"
+                                            KeyDown="FixedValueTextBox_KeyDown"
+                                            Text="{Binding FixedValue, StringFormat={}{0:0.##}, UpdateSourceTrigger=LostFocus}"
+                                            TextAlignment="Right" />
+                                    </Grid>
                                     <TextBlock
                                         Margin="0,3,0,0"
                                         FontSize="11"

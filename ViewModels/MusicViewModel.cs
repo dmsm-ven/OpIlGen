@@ -54,6 +54,7 @@ public partial class MusicViewModel : ObservableObject
     private BitmapSource? _baseImage;
     private CancellationTokenSource? _analysisCts;
     private bool _isRendering;
+    private bool _previewDirty;
     private bool _isSeeking;
     private bool _isUpdatingPosition;
 
@@ -86,6 +87,10 @@ public partial class MusicViewModel : ObservableObject
         Mappings = new ObservableCollection<MusicMappingRowViewModel>(
             transformer.AvailableCustomVariables.Select(v => new MusicMappingRowViewModel(v, localizer, options)));
         RestoreMappings();
+        foreach (var row in Mappings)
+        {
+            row.FixedStateChanged += (_, _) => RefreshPreview();
+        }
 
         _player.Volume = PositionToGain(_volumePosition);
 
@@ -240,7 +245,7 @@ public partial class MusicViewModel : ObservableObject
         try
         {
             _baseImage = CreatePreview(_imageService.Load(SourcePath));
-            ResultImage = Transformer.Transform(_baseImage);
+            ResultImage = Transformer.Transform(_baseImage, BuildFixedVariables());
         }
         catch (Exception ex)
         {
@@ -367,7 +372,7 @@ public partial class MusicViewModel : ObservableObject
         // Возвращаем картинку к значениям по умолчанию
         if (_baseImage is not null)
         {
-            ResultImage = Transformer.Transform(_baseImage);
+            ResultImage = Transformer.Transform(_baseImage, BuildFixedVariables());
         }
 
         foreach (var row in Mappings)
@@ -424,6 +429,12 @@ public partial class MusicViewModel : ObservableObject
                 continue;
             }
 
+            if (row.SelectedSource == AudioFeature.Fixed)
+            {
+                result.Add(row.Variable.WithValue(row.FixedValue));
+                continue;
+            }
+
             double level = Smooth(row.SelectedSource, analysis.GetLevel(row.SelectedSource, position));
             double value = new AudioReactiveMapping(row.Variable, row.SelectedSource).Map(level);
 
@@ -447,6 +458,56 @@ public partial class MusicViewModel : ObservableObject
         return current;
     }
 
+    /// <summary>Параметры, замороженные на введённом вручную значении.</summary>
+    private TransformerVariable[] BuildFixedVariables()
+        => Mappings
+            .Where(r => r.SelectedSource == AudioFeature.Fixed)
+            .Select(r => r.Variable.WithValue(r.FixedValue))
+            .ToArray();
+
+    /// <summary>
+    /// Перерисовывает картинку, пока музыка не играет (во время воспроизведения кадры рисует таймер).
+    /// Если значения меняются быстрее, чем считается кадр, после него считается ещё один, уже с последними.
+    /// </summary>
+    private async void RefreshPreview()
+    {
+        if (IsPlaying || _baseImage is null)
+        {
+            return;
+        }
+
+        _previewDirty = true;
+        if (_isRendering)
+        {
+            return;
+        }
+
+        _isRendering = true;
+        try
+        {
+            while (_previewDirty && !IsPlaying)
+            {
+                _previewDirty = false;
+                var variables = BuildFixedVariables();
+                var source = _baseImage;
+                var image = await Task.Run(() => Transformer.Transform(source, variables));
+
+                if (!IsPlaying)
+                {
+                    ResultImage = image;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Status = string.Format(_localizer.Get("status.error"), ex.Message);
+        }
+        finally
+        {
+            _isRendering = false;
+        }
+    }
+
     /// <summary>Возвращает привязки параметров к звуку, сохранённые для этого преобразователя (не зависит от изображения).</summary>
     private void RestoreMappings()
     {
@@ -455,8 +516,15 @@ public partial class MusicViewModel : ObservableObject
             return;
         }
 
+        _settings.Current.MusicFixedValues.TryGetValue(Transformer.Key, out var fixedValues);
+
         foreach (var row in Mappings)
         {
+            if (fixedValues is not null && fixedValues.TryGetValue(row.Variable.Key, out var fixedValue))
+            {
+                row.FixedValue = fixedValue;
+            }
+
             if (saved.TryGetValue(row.Variable.Key, out var name)
                 && Enum.TryParse<AudioFeature>(name, out var feature)
                 && Enum.IsDefined(feature))
@@ -473,6 +541,10 @@ public partial class MusicViewModel : ObservableObject
             .Where(r => r.SelectedSource != AudioFeature.None)
             .ToDictionary(r => r.Variable.Key, r => r.SelectedSource.ToString());
 
+        var fixedValues = Mappings
+            .Where(r => r.SelectedSource == AudioFeature.Fixed)
+            .ToDictionary(r => r.Variable.Key, r => r.FixedValue);
+
         if (bound.Count > 0)
         {
             _settings.Current.MusicMappings[Transformer.Key] = bound;
@@ -480,6 +552,15 @@ public partial class MusicViewModel : ObservableObject
         else
         {
             _settings.Current.MusicMappings.Remove(Transformer.Key);
+        }
+
+        if (fixedValues.Count > 0)
+        {
+            _settings.Current.MusicFixedValues[Transformer.Key] = fixedValues;
+        }
+        else
+        {
+            _settings.Current.MusicFixedValues.Remove(Transformer.Key);
         }
     }
 

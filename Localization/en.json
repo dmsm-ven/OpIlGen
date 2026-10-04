@@ -273,5 +273,6 @@
   "transformer.flow_field.var.influence.name": "Image influence, %",
   "transformer.flow_field.var.influence.description": "0 - lines follow a smooth \"wind\" regardless of the picture. 100 - strictly along image contours.",
   "transformer.flow_field.var.rotation.name": "Field rotation, °",
-  "transformer.flow_field.var.rotation.description": "Rotation of all field directions. Changes the overall tilt of the flow."
+  "transformer.flow_field.var.rotation.description": "Rotation of all field directions. Changes the overall tilt of the flow.",
+  "music.source.fixed": "Fixed value"
 }

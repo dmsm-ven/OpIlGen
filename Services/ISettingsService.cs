@@ -80,6 +80,9 @@ public sealed class AppSettings
     /// </summary>
     public Dictionary<string, Dictionary<string, string>> MusicMappings { get; set; } = new();
 
+    /// <summary>Значения параметров с привязкой «Фиксированное значение»: ключ преобразователя -> (ключ параметра -> значение).</summary>
+    public Dictionary<string, Dictionary<string, double>> MusicFixedValues { get; set; } = new();
+
     /// <summary>Путь к последнему выбранному музыкальному файлу.</summary>
     public string? MusicLastTrack { get; set; }
 
