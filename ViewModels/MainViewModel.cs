@@ -17,6 +17,7 @@ public partial class MainViewModel : ObservableObject
     private readonly IFullScreenService _fullScreen;
     private readonly IShellService _shell;
     private readonly IGifGeneratorWindowService _gifGenerator;
+    private readonly IMusicWindowService _musicWindow;
     private readonly ISettingsWindowService _settingsWindow;
     private readonly ILocalizationService _localizer;
 
@@ -43,6 +44,7 @@ public partial class MainViewModel : ObservableObject
         IFullScreenService fullScreen,
         IShellService shell,
         IGifGeneratorWindowService gifGenerator,
+        IMusicWindowService musicWindow,
         ISettingsWindowService settingsWindow,
         ILocalizationService localizer,
         IEnumerable<IImageTransformer> transformers)
@@ -52,6 +54,7 @@ public partial class MainViewModel : ObservableObject
         _fullScreen = fullScreen;
         _shell = shell;
         _gifGenerator = gifGenerator;
+        _musicWindow = musicWindow;
         _settingsWindow = settingsWindow;
         _localizer = localizer;
 
@@ -68,10 +71,12 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(OpenGifGeneratorCommand))]
+    [NotifyCanExecuteChangedFor(nameof(OpenMusicWindowCommand))]
     private string? _sourcePath;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(OpenGifGeneratorCommand))]
+    [NotifyCanExecuteChangedFor(nameof(OpenMusicWindowCommand))]
     [NotifyPropertyChangedFor(nameof(SelectedDescription))]
     private IImageTransformer? _selectedTransformer;
 
@@ -160,6 +165,18 @@ public partial class MainViewModel : ObservableObject
     }
 
     private bool CanOpenGifGenerator() => !string.IsNullOrEmpty(SourcePath) && SelectedTransformer is not null;
+
+    [RelayCommand(CanExecute = nameof(CanOpenMusicWindow))]
+    private void OpenMusicWindow()
+    {
+        if (SourcePath is not null && SelectedTransformer is not null)
+        {
+            // Окно модальное: берётся выбор на момент открытия (файл и преобразователь)
+            _musicWindow.Show(SourcePath, SelectedTransformer);
+        }
+    }
+
+    private bool CanOpenMusicWindow() => !string.IsNullOrEmpty(SourcePath) && SelectedTransformer is not null;
 
     [RelayCommand]
     private void OpenOutputFolder()

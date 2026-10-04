@@ -132,5 +132,18 @@
   "transformer.peripheral_drift.var.segments_per_ring.name": "Сегментов на кольцо",
   "transformer.peripheral_drift.var.segments_per_ring.description": "Количество радиальных сегментов в каждом кольце. Большее значение создаёт более мелкий узор.",
   "transformer.peripheral_drift.var.pattern_strength.name": "Сила узора, %",
-  "transformer.peripheral_drift.var.pattern_strength.description": "Степень смешивания узора с исходным изображением. При 100% исходная фотография полностью заменяется узором."
+  "transformer.peripheral_drift.var.pattern_strength.description": "Степень смешивания узора с исходным изображением. При 100% исходная фотография полностью заменяется узором.",
+  "main.music": "Музыкальный режим",
+  "dialog.select_audio.title": "Выберите музыкальный файл",
+  "dialog.select_audio.filter": "Аудио (*.mp3;*.wav;*.wma;*.m4a;*.aac)|*.mp3;*.wav;*.wma;*.m4a;*.aac|Все файлы (*.*)|*.*",
+  "music.title": "Музыкальный режим",
+  "music.select": "Выбрать файл...",
+  "music.play": "Play",
+  "music.stop": "Стоп",
+  "music.status.initial": "Выберите музыкальный файл и нажмите Play.",
+  "music.status.selected": "Файл выбран. Нажмите Play.",
+  "music.status.playing": "Воспроизведение...",
+  "music.status.stopped": "Остановлено.",
+  "music.status.ended": "Воспроизведение завершено.",
+  "music.status.error": "Не удалось воспроизвести файл: {0}"
 }

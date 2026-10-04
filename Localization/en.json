@@ -132,5 +132,18 @@
   "transformer.peripheral_drift.var.segments_per_ring.name": "Segments per ring",
   "transformer.peripheral_drift.var.segments_per_ring.description": "Number of radial segments in each ring. A larger value creates a finer pattern.",
   "transformer.peripheral_drift.var.pattern_strength.name": "Pattern strength, %",
-  "transformer.peripheral_drift.var.pattern_strength.description": "How strongly the pattern is blended with the original image. At 100 % the original photo is completely replaced by the pattern."
+  "transformer.peripheral_drift.var.pattern_strength.description": "How strongly the pattern is blended with the original image. At 100 % the original photo is completely replaced by the pattern.",
+  "main.music": "Music mode",
+  "dialog.select_audio.title": "Select a music file",
+  "dialog.select_audio.filter": "Audio (*.mp3;*.wav;*.wma;*.m4a;*.aac)|*.mp3;*.wav;*.wma;*.m4a;*.aac|All files (*.*)|*.*",
+  "music.title": "Music mode",
+  "music.select": "Select file...",
+  "music.play": "Play",
+  "music.stop": "Stop",
+  "music.status.initial": "Select a music file and press Play.",
+  "music.status.selected": "File selected. Press Play.",
+  "music.status.playing": "Playing...",
+  "music.status.stopped": "Stopped.",
+  "music.status.error": "Could not play the file: {0}",
+  "music.status.ended": "Playback finished."
 }

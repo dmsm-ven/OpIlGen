@@ -44,6 +44,7 @@ public partial class App : Application
         services.AddSingleton<IShellService, ShellService>();
         services.AddSingleton<IGifService, GifService>();
         services.AddSingleton<IGifGeneratorWindowService, GifGeneratorWindowService>();
+        services.AddSingleton<IMusicWindowService, MusicWindowService>();
         services.AddSingleton<IThemeService, ThemeService>();
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<ISettingsWindowService, SettingsWindowService>();

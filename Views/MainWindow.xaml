@@ -39,6 +39,10 @@
                         Content="&#xE768;"
                         ToolTip="{loc:Loc main.gif_generator}"
                         Command="{Binding OpenGifGeneratorCommand}" />
+                <Button Style="{StaticResource IconButton}"
+                        Content="&#xE8D6;"
+                        ToolTip="{loc:Loc main.music}"
+                        Command="{Binding OpenMusicWindowCommand}" />
             </StackPanel>
 
             <Button DockPanel.Dock="Right"

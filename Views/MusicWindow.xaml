@@ -1,0 +1,77 @@
+<Window
+    x:Class="OpIlGen.Views.MusicWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:loc="clr-namespace:OpIlGen.Localization"
+    Title="{loc:Loc music.title}"
+    Width="520"
+    Height="300"
+    MinWidth="420"
+    MinHeight="260"
+    Background="{DynamicResource WindowBackgroundBrush}"
+    Foreground="{DynamicResource TextBrush}"
+    WindowStartupLocation="CenterOwner">
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!--  Что пришло с главного окна  -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <TextBlock>
+                <Run FontWeight="SemiBold" Text="{loc:Loc gif.file}" /><Run Text="{Binding SourceName, Mode=OneWay}" />
+            </TextBlock>
+            <TextBlock Margin="0,2,0,0">
+                <Run FontWeight="SemiBold" Text="{loc:Loc gif.transformer}" /><Run Text="{Binding TransformerName, Mode=OneWay}" />
+            </TextBlock>
+        </StackPanel>
+
+        <!--  Выбор музыкального файла  -->
+        <Grid Grid.Row="1" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Button
+                Grid.Column="0"
+                Margin="0,0,10,0"
+                Padding="12,4"
+                Command="{Binding SelectMusicCommand}"
+                Content="{loc:Loc music.select}"
+                Style="{StaticResource TextButton}" />
+
+            <TextBlock
+                Grid.Column="1"
+                VerticalAlignment="Center"
+                Text="{Binding MusicName}"
+                TextTrimming="CharacterEllipsis" />
+        </Grid>
+
+        <!--  Play / Stop  -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal">
+            <Button
+                Margin="0,0,8,0"
+                Padding="16,4"
+                VerticalAlignment="Top"
+                Command="{Binding PlayCommand}"
+                Content="{loc:Loc music.play}"
+                Style="{StaticResource TextButton}" />
+            <Button
+                Padding="16,4"
+                VerticalAlignment="Top"
+                Command="{Binding StopCommand}"
+                Content="{loc:Loc music.stop}"
+                Style="{StaticResource TextButton}" />
+        </StackPanel>
+
+        <TextBlock
+            Grid.Row="3"
+            Text="{Binding Status}"
+            TextWrapping="Wrap" />
+    </Grid>
+</Window>
