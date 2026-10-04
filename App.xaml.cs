@@ -77,6 +77,10 @@ public partial class App : Application
         services.AddSingleton<IImageTransformer, CafeWallTransformer>();
         services.AddSingleton<IImageTransformer, AutokineticTransformer>();
         services.AddSingleton<IImageTransformer, PencilSketchTransformer>();
+        services.AddSingleton<IImageTransformer, BokehBlurTransformer>();
+        services.AddSingleton<IImageTransformer, MotionBlurTransformer>();
+        services.AddSingleton<IImageTransformer, SurfaceBlurTransformer>();
+        services.AddSingleton<IImageTransformer, SketchBlurTransformer>();
         services.AddSingleton<IImageTransformer, OilPaintingTransformer>();
         services.AddSingleton<IImageTransformer, PeripheralDriftTransformer>();
     }
