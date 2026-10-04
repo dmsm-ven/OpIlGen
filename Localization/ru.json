@@ -145,5 +145,12 @@
   "music.status.playing": "Воспроизведение...",
   "music.status.stopped": "Остановлено.",
   "music.status.ended": "Воспроизведение завершено.",
-  "music.status.error": "Не удалось воспроизвести файл: {0}"
+  "music.status.error": "Не удалось воспроизвести файл: {0}",
+  "music.mapping.header": "Зависимость параметров от звука",
+  "music.source.none": "— не зависит —",
+  "music.source.bass": "Басы",
+  "music.value_format": "Сейчас: {0:0.##} (уровень {1:P0})",
+  "music.status.analyzing": "Анализ звука...",
+  "music.status.ready": "Анализ готов. Выберите зависимости и нажмите Play.",
+  "music.status.analysis_error": "Не удалось проанализировать файл: {0}"
 }

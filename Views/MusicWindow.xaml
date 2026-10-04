@@ -4,74 +4,132 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:loc="clr-namespace:OpIlGen.Localization"
     Title="{loc:Loc music.title}"
-    Width="520"
-    Height="300"
-    MinWidth="420"
-    MinHeight="260"
+    Width="1000"
+    Height="640"
+    MinWidth="720"
+    MinHeight="460"
     Background="{DynamicResource WindowBackgroundBrush}"
     Foreground="{DynamicResource TextBrush}"
     WindowStartupLocation="CenterOwner">
 
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </Window.Resources>
+
     <Grid Margin="12">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3*" />
+            <ColumnDefinition Width="2*" MinWidth="300" />
+        </Grid.ColumnDefinitions>
 
-        <!--  Что пришло с главного окна  -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,12">
-            <TextBlock>
-                <Run FontWeight="SemiBold" Text="{loc:Loc gif.file}" /><Run Text="{Binding SourceName, Mode=OneWay}" />
-            </TextBlock>
-            <TextBlock Margin="0,2,0,0">
-                <Run FontWeight="SemiBold" Text="{loc:Loc gif.transformer}" /><Run Text="{Binding TransformerName, Mode=OneWay}" />
-            </TextBlock>
-        </StackPanel>
+        <!--  Холст: фон всегда тёмный, как на главном окне  -->
+        <Border
+            Grid.Column="0"
+            Margin="0,0,12,0"
+            Background="#FF202020"
+            BorderBrush="{DynamicResource ControlBorderBrush}"
+            BorderThickness="1">
+            <Canvas x:Name="ResultCanvas" ClipToBounds="True">
+                <Image
+                    Width="{Binding ActualWidth, ElementName=ResultCanvas}"
+                    Height="{Binding ActualHeight, ElementName=ResultCanvas}"
+                    Source="{Binding ResultImage}"
+                    Stretch="Uniform" />
+            </Canvas>
+        </Border>
 
-        <!--  Выбор музыкального файла  -->
-        <Grid Grid.Row="1" Margin="0,0,0,12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-            <Button
-                Grid.Column="0"
-                Margin="0,0,10,0"
-                Padding="12,4"
-                Command="{Binding SelectMusicCommand}"
-                Content="{loc:Loc music.select}"
-                Style="{StaticResource TextButton}" />
+            <!--  Что пришло с главного окна  -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                <TextBlock TextTrimming="CharacterEllipsis">
+                    <Run FontWeight="SemiBold" Text="{loc:Loc gif.file}" /><Run Text="{Binding SourceName, Mode=OneWay}" />
+                </TextBlock>
+                <TextBlock Margin="0,2,0,0" TextTrimming="CharacterEllipsis">
+                    <Run FontWeight="SemiBold" Text="{loc:Loc gif.transformer}" /><Run Text="{Binding TransformerName, Mode=OneWay}" />
+                </TextBlock>
+            </StackPanel>
 
-            <TextBlock
-                Grid.Column="1"
-                VerticalAlignment="Center"
-                Text="{Binding MusicName}"
-                TextTrimming="CharacterEllipsis" />
+            <!--  Выбор музыкального файла  -->
+            <Grid Grid.Row="1" Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button
+                    Grid.Column="0"
+                    Margin="0,0,10,0"
+                    Padding="12,4"
+                    Command="{Binding SelectMusicCommand}"
+                    Content="{loc:Loc music.select}"
+                    Style="{StaticResource TextButton}" />
+                <TextBlock
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Text="{Binding MusicName}"
+                    TextTrimming="CharacterEllipsis" />
+            </Grid>
+
+            <!--  Зависимости: параметр преобразователя <- характеристика звука  -->
+            <GroupBox
+                Grid.Row="2"
+                Header="{loc:Loc music.mapping.header}"
+                Padding="6"
+                Visibility="{Binding HasMappings, Converter={StaticResource BoolToVisibility}}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Mappings}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,0,0,10" ToolTip="{Binding Description}">
+                                    <TextBlock FontWeight="SemiBold" Text="{Binding Name}" TextWrapping="Wrap" />
+                                    <ComboBox
+                                        Margin="0,4,0,0"
+                                        DisplayMemberPath="Label"
+                                        ItemsSource="{Binding Options}"
+                                        SelectedValue="{Binding SelectedSource}"
+                                        SelectedValuePath="Source" />
+                                    <TextBlock
+                                        Margin="0,3,0,0"
+                                        FontSize="11"
+                                        Opacity="0.75"
+                                        Text="{Binding CurrentValueText}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </GroupBox>
+
+            <!--  Play / Stop  -->
+            <StackPanel Grid.Row="3" Margin="0,10,0,10" Orientation="Horizontal">
+                <Button
+                    Margin="0,0,8,0"
+                    Padding="16,4"
+                    Command="{Binding PlayCommand}"
+                    Content="{loc:Loc music.play}"
+                    Style="{StaticResource TextButton}" />
+                <Button
+                    Padding="16,4"
+                    Command="{Binding StopCommand}"
+                    Content="{loc:Loc music.stop}"
+                    Style="{StaticResource TextButton}" />
+            </StackPanel>
+
+            <StackPanel Grid.Row="4">
+                <ProgressBar
+                    Height="6"
+                    Margin="0,0,0,6"
+                    IsIndeterminate="True"
+                    Visibility="{Binding IsAnalyzing, Converter={StaticResource BoolToVisibility}}" />
+                <TextBlock Text="{Binding Status}" TextWrapping="Wrap" />
+            </StackPanel>
         </Grid>
-
-        <!--  Play / Stop  -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal">
-            <Button
-                Margin="0,0,8,0"
-                Padding="16,4"
-                VerticalAlignment="Top"
-                Command="{Binding PlayCommand}"
-                Content="{loc:Loc music.play}"
-                Style="{StaticResource TextButton}" />
-            <Button
-                Padding="16,4"
-                VerticalAlignment="Top"
-                Command="{Binding StopCommand}"
-                Content="{loc:Loc music.stop}"
-                Style="{StaticResource TextButton}" />
-        </StackPanel>
-
-        <TextBlock
-            Grid.Row="3"
-            Text="{Binding Status}"
-            TextWrapping="Wrap" />
     </Grid>
 </Window>
