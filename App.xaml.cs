@@ -83,6 +83,13 @@ public partial class App : Application
         services.AddSingleton<IImageTransformer, SketchBlurTransformer>();
         services.AddSingleton<IImageTransformer, OilPaintingTransformer>();
         services.AddSingleton<IImageTransformer, PeripheralDriftTransformer>();
+        services.AddSingleton<IImageTransformer, SlitScanTransformer>();
+        services.AddSingleton<IImageTransformer, DisplacementMapTransformer>();
+        services.AddSingleton<IImageTransformer, PixelSortingTransformer>();
+        services.AddSingleton<IImageTransformer, KaleidoscopeTransformer>();
+        services.AddSingleton<IImageTransformer, OpArtLinesTransformer>();
+        services.AddSingleton<IImageTransformer, VoronoiStipplingTransformer>();
+        services.AddSingleton<IImageTransformer, FlowFieldTransformer>();
     }
 
 
