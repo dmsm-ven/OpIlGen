@@ -25,6 +25,14 @@ public partial class MusicViewModel : ObservableObject
     private const double AttackFactor = 0.7;
     private const double ReleaseFactor = 0.3;
 
+    /// <summary>Ритм короткий и резкий: ему нужна почти мгновенная реакция и быстрый спад.</summary>
+    private const double BeatAttackFactor = 0.95;
+    private const double BeatReleaseFactor = 0.5;
+
+    /// <summary>Громкость плеера: ползунок 0..1 -> от -60 дБ до 0 дБ (логарифмическая шкала).</summary>
+    private const double VolumeRangeDb = 60;
+    private const double DefaultVolumePosition = 0.9;
+
     private readonly IFileDialogService _fileDialog;
     private readonly IImageService _imageService;
     private readonly IAudioAnalysisService _analysisService;
@@ -53,13 +61,13 @@ public partial class MusicViewModel : ObservableObject
         _localizer = localizer;
         _status = localizer.Get("music.status.initial");
 
-        var options = new[]
-        {
-            new AudioSourceOption(AudioFeature.None, localizer.Get("music.source.none")),
-            new AudioSourceOption(AudioFeature.Bass, localizer.Get("music.source.bass"))
-        };
+        var options = Enum.GetValues<AudioFeature>()
+            .Select(f => new AudioSourceOption(f, localizer.Get($"music.source.{f.ToString().ToLowerInvariant()}")))
+            .ToArray();
         Mappings = new ObservableCollection<MusicMappingRowViewModel>(
             transformer.AvailableCustomVariables.Select(v => new MusicMappingRowViewModel(v, localizer, options)));
+
+        _player.Volume = PositionToGain(DefaultVolumePosition);
 
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(UpdateIntervalMs) };
         _timer.Tick += OnTimerTick;
@@ -113,6 +121,21 @@ public partial class MusicViewModel : ObservableObject
 
     [ObservableProperty]
     private string _status;
+
+    /// <summary>Положение ползунка громкости (0..1). Громкость растёт логарифмически, как в обычных плеерах.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(VolumeText))]
+    private double _volumePosition = DefaultVolumePosition;
+
+    public string VolumeText => VolumePosition <= 0
+        ? _localizer.Get("music.volume.mute")
+        : string.Format(_localizer.Get("music.volume.db_format"), -VolumeRangeDb * (1 - VolumePosition));
+
+    partial void OnVolumePositionChanged(double value) => _player.Volume = PositionToGain(value);
+
+    /// <summary>Положение ползунка (0..1) -> множитель громкости: 0 = тишина, иначе от -60 дБ до 0 дБ.</summary>
+    private static double PositionToGain(double position)
+        => position <= 0 ? 0 : Math.Pow(10, -VolumeRangeDb * (1 - Math.Min(position, 1)) / 20);
 
     public string MusicName => string.IsNullOrEmpty(MusicPath) ? "-" : Path.GetFileName(MusicPath);
 
@@ -202,6 +225,7 @@ public partial class MusicViewModel : ObservableObject
 
         _smoothed.Clear();
         _player.Open(new Uri(MusicPath, UriKind.Absolute));
+        _player.Volume = PositionToGain(VolumePosition);
         _player.Play();
         IsPlaying = true;
         _timer.Start();
@@ -291,7 +315,10 @@ public partial class MusicViewModel : ObservableObject
     private double Smooth(AudioFeature feature, double target)
     {
         _smoothed.TryGetValue(feature, out double current);
-        double factor = target > current ? AttackFactor : ReleaseFactor;
+        bool isBeat = feature == AudioFeature.Beat;
+        double factor = target > current
+            ? (isBeat ? BeatAttackFactor : AttackFactor)
+            : (isBeat ? BeatReleaseFactor : ReleaseFactor);
         current += (target - current) * factor;
         _smoothed[feature] = current;
         return current;

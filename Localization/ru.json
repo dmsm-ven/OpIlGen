@@ -152,5 +152,13 @@
   "music.value_format": "Сейчас: {0:0.##} (уровень {1:P0})",
   "music.status.analyzing": "Анализ звука...",
   "music.status.ready": "Анализ готов. Выберите зависимости и нажмите Play.",
-  "music.status.analysis_error": "Не удалось проанализировать файл: {0}"
+  "music.status.analysis_error": "Не удалось проанализировать файл: {0}",
+  "music.source.loudness": "Громкость",
+  "music.source.mid": "Средние частоты",
+  "music.source.treble": "Высокие частоты",
+  "music.source.beat": "Ритм (удары)",
+  "music.source.brightness": "Яркость звука",
+  "music.volume.mute": "Без звука",
+  "music.volume.db_format": "{0:0} дБ",
+  "music.volume.tooltip": "Громкость воспроизведения (логарифмическая шкала). На анализ звука и изображение не влияет."
 }

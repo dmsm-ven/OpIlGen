@@ -152,5 +152,13 @@
   "music.value_format": "Now: {0:0.##} (level {1:P0})",
   "music.status.analyzing": "Analyzing audio...",
   "music.status.ready": "Analysis done. Choose dependencies and press Play.",
-  "music.status.analysis_error": "Could not analyze the file: {0}"
+  "music.status.analysis_error": "Could not analyze the file: {0}",
+  "music.source.loudness": "Loudness",
+  "music.source.mid": "Mid frequencies",
+  "music.source.treble": "High frequencies",
+  "music.source.beat": "Beat (hits)",
+  "music.source.brightness": "Sound brightness",
+  "music.volume.mute": "Muted",
+  "music.volume.db_format": "{0:0} dB",
+  "music.volume.tooltip": "Playback volume (logarithmic scale). Does not affect sound analysis or the image."
 }
