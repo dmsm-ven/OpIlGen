@@ -1,52 +1,66 @@
-<Window x:Class="OpIlGen.Views.SettingsWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:loc="clr-namespace:OpIlGen.Localization"
-        Title="{loc:Loc settings.title}"
-        Width="340"
-        SizeToContent="Height"
-        ResizeMode="NoResize"
-        ShowInTaskbar="False"
-        WindowStartupLocation="CenterOwner"
-        Background="{DynamicResource WindowBackgroundBrush}"
-        Foreground="{DynamicResource TextBrush}">
+﻿<Window
+    x:Class="OpIlGen.Views.SettingsWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:iconsPack="http://metro.mahapps.com/winfx/xaml/iconpacks"
+    xmlns:loc="clr-namespace:OpIlGen.Localization"
+    Title="{loc:Loc settings.title}"
+    Width="340"
+    Background="{DynamicResource WindowBackgroundBrush}"
+    Foreground="{DynamicResource TextBrush}"
+    ResizeMode="NoResize"
+    ShowInTaskbar="False"
+    SizeToContent="Height"
+    WindowStartupLocation="CenterOwner">
 
     <StackPanel Margin="16">
-        <!-- Тема -->
-        <GroupBox Header="{loc:Loc settings.theme}" Margin="0,0,0,12" Padding="8">
+        <!--  Тема  -->
+        <GroupBox
+            Margin="0,0,0,12"
+            Padding="8"
+            Header="{loc:Loc settings.theme}">
             <StackPanel>
-                <RadioButton Content="{loc:Loc settings.theme.light}"
-                             GroupName="Theme"
-                             Margin="0,0,0,6"
-                             IsChecked="{Binding IsLightTheme}" />
-                <RadioButton Content="{loc:Loc settings.theme.dark}"
-                             GroupName="Theme"
-                             IsChecked="{Binding IsDarkTheme}" />
+                <RadioButton
+                    Margin="0,0,0,6"
+                    Content="{loc:Loc settings.theme.light}"
+                    GroupName="Theme"
+                    IsChecked="{Binding IsLightTheme}" />
+                <RadioButton
+                    Content="{loc:Loc settings.theme.dark}"
+                    GroupName="Theme"
+                    IsChecked="{Binding IsDarkTheme}" />
             </StackPanel>
         </GroupBox>
 
-        <!-- Язык: список строится из найденных языковых файлов (Localization/*.json) -->
-        <GroupBox Header="{loc:Loc settings.language}" Margin="0,0,0,12" Padding="4">
-            <ListBox ItemsSource="{Binding Languages}"
-                     SelectedItem="{Binding SelectedLanguage}"
-                     DisplayMemberPath="DisplayName" />
+        <!--  Язык: список строится из найденных языковых файлов (Localization/*.json)  -->
+        <GroupBox
+            Margin="0,0,0,12"
+            Padding="4"
+            Header="{loc:Loc settings.language}">
+            <ListBox
+                DisplayMemberPath="DisplayName"
+                ItemsSource="{Binding Languages}"
+                SelectedItem="{Binding SelectedLanguage}" />
         </GroupBox>
 
-        <!-- Файл настроек: путь (можно выделить и скопировать) и кнопка «открыть» только для просмотра -->
-        <GroupBox Header="{loc:Loc settings.file}" Padding="8">
+        <!--  Файл настроек: путь (можно выделить и скопировать) и кнопка «открыть» только для просмотра  -->
+        <GroupBox Padding="8" Header="{loc:Loc settings.file}">
             <DockPanel LastChildFill="True">
-                <Button DockPanel.Dock="Right"
-                        Style="{StaticResource IconButton}"
-                        Content="&#xE8E5;"
-                        Margin="8,0,0,0"
-                        VerticalAlignment="Center"
-                        ToolTip="{loc:Loc settings.file.open}"
-                        Command="{Binding OpenSettingsFileCommand}" />
-                <TextBox Text="{Binding SettingsFilePath, Mode=OneWay}"
-                         IsReadOnly="True"
-                         TextWrapping="Wrap"
-                         VerticalContentAlignment="Center"
-                         ToolTip="{Binding SettingsFilePath}" />
+                <Button
+                    Margin="8,0,0,0"
+                    VerticalAlignment="Center"
+                    Command="{Binding OpenSettingsFileCommand}"
+                    DockPanel.Dock="Right"
+                    Style="{StaticResource IconButton}"
+                    ToolTip="{loc:Loc settings.file.open}">
+                    <iconsPack:PackIconMaterial Kind="FileOutline" />
+                </Button>
+                <TextBox
+                    VerticalContentAlignment="Center"
+                    IsReadOnly="True"
+                    Text="{Binding SettingsFilePath, Mode=OneWay}"
+                    TextWrapping="Wrap"
+                    ToolTip="{Binding SettingsFilePath}" />
             </DockPanel>
         </GroupBox>
     </StackPanel>
