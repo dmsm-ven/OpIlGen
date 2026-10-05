@@ -5,7 +5,8 @@ namespace OpIlGen.Services.Transformers;
 /// <summary>
 /// Карта высот: изображение разбивается на ячейки (квадраты, соты или звёзды с ромбами). Для каждой ячейки
 /// считается «высота» по самому изображению: средняя яркость или отличие от соседних ячеек. Высокие ячейки
-/// «поднимаются» (полупрозрачная тёплая заливка), низкие «опускаются» (холодная), остальные остаются обычными.
+/// «поднимаются» (тёплая заливка), низкие «опускаются» (холодная), остальные остаются обычными.
+/// Поднятые ячейки рисуются как выступающие столбики (боковые стенки и тень), опущенные - как впадины.
 /// </summary>
 public sealed class HeightMapTransformer : PixelTransformerBase
 {
@@ -17,6 +18,7 @@ public sealed class HeightMapTransformer : PixelTransformerBase
     private const double DefaultRaiseThreshold = 65;
     private const double DefaultLowerThreshold = 35;
     private const double DefaultOpacityPercent = 55;
+    private const double DefaultReliefPercent = 40;
     private const double DefaultInvert = 0;
 
     private const int ShapeSquare = 0;
@@ -36,6 +38,16 @@ public sealed class HeightMapTransformer : PixelTransformerBase
     private const double StarInnerRatio = 0.12;
 
     private const float GridLineStrength = 0.35f;
+
+    // Объём. Вид сверху с небольшим наклоном: вершины выступающих ячеек смещаются вверх, видны их нижние
+    // (южные) стенки; во впадине видна северная внутренняя стенка. Свет падает слева сверху.
+    private const float WallShade = 0.6f;
+    private const float RaisedTopLight = 1.1f;
+    private const float LoweredFloorShade = 0.85f;
+    private const float ShadowShade = 0.62f;
+
+    /// <summary>Сколько пикселей высоты нужно препятствию на каждый диагональный шаг, чтобы бросить тень.</summary>
+    private const int LightSlope = 1;
 
     // Цвета заливки (B, G, R): поднятые - тёплый оранжевый, опущенные - холодный синий
     private static readonly (float B, float G, float R) RaisedColor = (0f, 140f, 255f);
@@ -59,6 +71,9 @@ public sealed class HeightMapTransformer : PixelTransformerBase
     private static readonly TransformerVariable OpacityVariable =
         TransformerVariableFactory.Create(Id, "opacity", 0, DefaultOpacityPercent, 100, 5);
 
+    private static readonly TransformerVariable ReliefVariable =
+        TransformerVariableFactory.Create(Id, "relief", 0, DefaultReliefPercent, 100, 5);
+
     private static readonly TransformerVariable InvertVariable =
         TransformerVariableFactory.Create(Id, "invert", 0, DefaultInvert, 1, 1);
 
@@ -72,7 +87,8 @@ public sealed class HeightMapTransformer : PixelTransformerBase
 
     public override TransformerVariable[] AvailableCustomVariables { get; } =
     [
-        ShapeVariable, SizeVariable, SourceVariable, RaiseVariable, LowerVariable, OpacityVariable, InvertVariable
+        ShapeVariable, SizeVariable, SourceVariable, RaiseVariable, LowerVariable, OpacityVariable, ReliefVariable,
+        InvertVariable
     ];
 
     protected override byte[] Process(byte[] pixels, int width, int height, TransformerVariable[]? customVariables)
@@ -83,7 +99,11 @@ public sealed class HeightMapTransformer : PixelTransformerBase
         double raise = customVariables.GetValue(RaiseVariable);
         double lower = customVariables.GetValue(LowerVariable);
         float opacity = (float)(customVariables.GetValue(OpacityVariable) / 100.0);
+        double reliefPercent = customVariables.GetValue(ReliefVariable);
         bool invert = Math.Round(customVariables.GetValue(InvertVariable)) >= 1;
+
+        // Высота столбиков и глубина впадин в пикселях (0 - плоская заливка без объёма)
+        int relief = (int)Math.Round(size * reliefPercent / 100.0);
 
         // Нижний порог не может быть выше верхнего
         if (lower > raise)
@@ -125,21 +145,82 @@ public sealed class HeightMapTransformer : PixelTransformerBase
             for (int x = 0; x < width; x++)
             {
                 int p = y * width + x;
-                int id = ids[p];
-                int o = p * 4;
-                float b = pixels[o], g = pixels[o + 1], r = pixels[o + 2];
 
-                // Полупрозрачная заливка: изображение под ней просвечивает
-                if (state[id] != 0)
+                // Луч идёт по столбцу пикселей сверху вниз по высоте: от самой высокой точки к самой низкой.
+                // Первая поверхность, высота которой не меньше высоты луча, и есть видимая.
+                int hit = -1;
+                int hitHeight = 0;
+                bool isWall = false;
+                for (int t = relief; t >= -relief; t--)
                 {
-                    var color = state[id] > 0 ? RaisedColor : LoweredColor;
+                    int qy = y + t;
+                    if ((uint)qy >= (uint)height)
+                    {
+                        continue;
+                    }
+
+                    int qi = qy * width + x;
+                    int z = state[ids[qi]] * relief;
+                    if (z >= t)
+                    {
+                        hit = qi;
+                        hitHeight = z;
+                        isWall = z > t;
+                        break;
+                    }
+                }
+
+                if (hit < 0)
+                {
+                    // Луч ушёл за край изображения: рисуем дно ячейки как есть
+                    hit = p;
+                    hitHeight = state[ids[p]] * relief;
+                }
+
+                int id = ids[hit];
+                int o = hit * 4;
+                float b = pixels[o], g = pixels[o + 1], r = pixels[o + 2];
+                int cellState = state[id];
+
+                if (isWall)
+                {
+                    // Боковая стенка: цвет ячейки, затенённый (стенки не освещены)
+                    if (cellState > 0)
+                    {
+                        b = RaisedColor.B;
+                        g = RaisedColor.G;
+                        r = RaisedColor.R;
+                    }
+
+                    PixelSampler.SetPixel(result, p, b * WallShade, g * WallShade, r * WallShade);
+                    continue;
+                }
+
+                // Верхняя грань (или дно впадины): полупрозрачная заливка, изображение просвечивает
+                if (cellState != 0)
+                {
+                    var color = cellState > 0 ? RaisedColor : LoweredColor;
                     b += (color.B - b) * opacity;
                     g += (color.G - g) * opacity;
                     r += (color.R - r) * opacity;
                 }
 
+                if (relief > 0)
+                {
+                    float light = cellState > 0 ? RaisedTopLight : cellState < 0 ? LoweredFloorShade : 1f;
+                    int hx = hit % width, hy = hit / width;
+                    if (IsInShadow(ids, state, relief, width, hx, hy, hitHeight))
+                    {
+                        light *= ShadowShade;
+                    }
+
+                    b *= light;
+                    g *= light;
+                    r *= light;
+                }
+
                 // Тонкая линия по границе ячеек (1 px)
-                if ((x > 0 && ids[p - 1] != id) || (y > 0 && ids[p - width] != id))
+                if ((hit % width > 0 && ids[hit - 1] != id) || (hit >= width && ids[hit - width] != id))
                 {
                     float keep = 1f - GridLineStrength;
                     b *= keep;
@@ -152,6 +233,32 @@ public sealed class HeightMapTransformer : PixelTransformerBase
         });
 
         return result;
+    }
+
+    /// <summary>
+    /// Лежит ли точка (x, y) на высоте <paramref name="surfaceHeight"/> в тени: свет падает слева сверху, и более
+    /// высокая ячейка в этом направлении загораживает его (чем она выше, тем длиннее тень).
+    /// </summary>
+    private static bool IsInShadow(int[] ids, sbyte[] state, int relief, int width, int x, int y, int surfaceHeight)
+    {
+        int tallestObstacle = relief - surfaceHeight;
+        for (int step = 1; step * LightSlope <= tallestObstacle; step++)
+        {
+            int sx = x - step;
+            int sy = y - step;
+            if (sx < 0 || sy < 0)
+            {
+                break;
+            }
+
+            int obstacleHeight = state[ids[sy * width + sx]] * relief;
+            if (obstacleHeight - surfaceHeight >= step * LightSlope)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>Номер ячейки для каждого пикселя и общее число номеров.</summary>

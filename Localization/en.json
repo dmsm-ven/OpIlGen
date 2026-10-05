@@ -285,7 +285,7 @@
   "transformer.kaleidoscope.var.blend.description": "100 - kaleidoscope only, 0 - the original image. A smooth transition in between.",
   "main.favorite": "Favorite (pin to the top of the list)",
   "transformer.height_map.name": "Height map",
-  "transformer.height_map.description": "The image is split into cells (squares, honeycomb or stars with rhombi). High cells are raised and tinted warm, low cells are lowered and tinted cool, the rest stay unfilled.",
+  "transformer.height_map.description": "The image is split into cells (squares, honeycomb or stars with rhombi). High cells rise above the surface like columns and are tinted warm, low cells sink like pits and are tinted cool, the rest stay unfilled.",
   "transformer.height_map.var.shape.name": "Shape (0 - squares, 1 - honeycomb, 2 - stars and rhombi)",
   "transformer.height_map.var.shape.description": "How the image is split into cells: a square grid, hexagonal honeycomb or four-pointed stars with rhombus-like cells between them.",
   "transformer.height_map.var.size.name": "Shape size, px",
@@ -297,7 +297,9 @@
   "transformer.height_map.var.lower_threshold.name": "Lower threshold",
   "transformer.height_map.var.lower_threshold.description": "Cells with height at or below this threshold (0-100) are lowered and tinted cool. A higher value gives more lowered cells.",
   "transformer.height_map.var.opacity.name": "Fill opacity, %",
-  "transformer.height_map.var.opacity.description": "How solid the raised and lowered cells are filled. Low values let the image show through.",
+  "transformer.height_map.var.opacity.description": "How solid the tops of raised cells and the floors of pits are filled. Low values let the image show through.",
   "transformer.height_map.var.invert.name": "Invert (0 - no, 1 - yes)",
-  "transformer.height_map.var.invert.description": "1 - swap the roles: dark cells are raised, bright cells are lowered."
+  "transformer.height_map.var.invert.description": "1 - swap the roles: dark cells are raised, bright cells are lowered.",
+  "transformer.height_map.var.relief.name": "Relief height, % of cell size",
+  "transformer.height_map.var.relief.description": "How far raised cells stand out and lowered cells sink: side walls, volume and shadows. 0 - flat fill without relief."
 }
