@@ -131,7 +131,19 @@
                         SelectedValuePath="Transformer">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Name}" TextWrapping="Wrap" />
+                                <DockPanel>
+                                    <!-- Звёздочка: избранный преобразователь закрепляется вверху списка -->
+                                    <ToggleButton
+                                        Margin="0,0,6,0"
+                                        DockPanel.Dock="Left"
+                                        IsChecked="{Binding IsFavorite}"
+                                        Style="{StaticResource FavoriteToggle}"
+                                        ToolTip="{loc:Loc main.favorite}" />
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        Text="{Binding Name}"
+                                        TextWrapping="Wrap" />
+                                </DockPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>

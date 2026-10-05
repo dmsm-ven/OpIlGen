@@ -3,7 +3,10 @@ using CommunityToolkit.Mvvm.Input;
 using OpIlGen.Localization;
 using OpIlGen.Services;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Globalization;
 using System.IO;
+using System.Windows.Data;
 using System.Windows.Media.Imaging;
 
 namespace OpIlGen.ViewModels;
@@ -20,6 +23,8 @@ public partial class MainViewModel : ObservableObject
     private readonly IMusicWindowService _musicWindow;
     private readonly ISettingsWindowService _settingsWindow;
     private readonly ILocalizationService _localizer;
+    private readonly ISettingsService _settings;
+    private ICollectionView? _transformersView;
 
     // Значения параметров запоминаются для каждого преобразователя при переключении между ними
     private readonly Dictionary<string, TransformerVariableViewModel[]> _variableCache = new();
@@ -46,6 +51,7 @@ public partial class MainViewModel : ObservableObject
         IGifGeneratorWindowService gifGenerator,
         IMusicWindowService musicWindow,
         ISettingsWindowService settingsWindow,
+        ISettingsService settings,
         ILocalizationService localizer,
         IEnumerable<IImageTransformer> transformers)
     {
@@ -57,14 +63,18 @@ public partial class MainViewModel : ObservableObject
         _musicWindow = musicWindow;
         _settingsWindow = settingsWindow;
         _localizer = localizer;
+        _settings = settings;
 
         _localizer.LanguageChanged += OnLanguageChanged;
 
+        var favorites = new HashSet<string>(_settings.Current.FavoriteTransformers);
         Transformers = new ObservableCollection<TransformerItemViewModel>(
-            transformers.Select(t => new TransformerItemViewModel(t, localizer)));
+            transformers.Select(t => new TransformerItemViewModel(t, localizer, favorites.Contains(t.Key), OnFavoriteChanged)));
+        ConfigureTransformersSorting();
 
         SetStatus(() => _localizer.Get("status.select_image"));
-        SelectedTransformer = Transformers.FirstOrDefault()?.Transformer;
+        // Первый в отсортированном списке (избранные, затем по алфавиту), а не в порядке регистрации
+        SelectedTransformer = _transformersView!.Cast<TransformerItemViewModel>().FirstOrDefault()?.Transformer;
     }
 
     public ObservableCollection<TransformerItemViewModel> Transformers { get; }
@@ -125,8 +135,57 @@ public partial class MainViewModel : ObservableObject
 
     private string ComposeTitle() => $"{AppName} - {_statusFactory()}";
 
+    /// <summary>Избранные сверху, внутри групп по алфавиту. Порядок обновляется сам при смене отметки или языка.</summary>
+    private void ConfigureTransformersSorting()
+    {
+        var view = CollectionViewSource.GetDefaultView(Transformers);
+        UpdateSortCulture(view);
+
+        view.SortDescriptions.Add(new SortDescription(nameof(TransformerItemViewModel.IsFavorite), ListSortDirection.Descending));
+        view.SortDescriptions.Add(new SortDescription(nameof(TransformerItemViewModel.Name), ListSortDirection.Ascending));
+
+        if (view is ICollectionViewLiveShaping live && live.CanChangeLiveSorting)
+        {
+            live.LiveSortingProperties.Add(nameof(TransformerItemViewModel.IsFavorite));
+            live.LiveSortingProperties.Add(nameof(TransformerItemViewModel.Name));
+            live.IsLiveSorting = true;
+        }
+
+        _transformersView = view;
+    }
+
+    /// <summary>Алфавит зависит от языка интерфейса: названия сравниваются по правилам его культуры.</summary>
+    private void UpdateSortCulture(ICollectionView view)
+    {
+        try
+        {
+            view.Culture = new CultureInfo(_localizer.CurrentLanguage.Code);
+        }
+        catch (CultureNotFoundException)
+        {
+            view.Culture = CultureInfo.InvariantCulture;
+        }
+    }
+
+    private void OnFavoriteChanged(TransformerItemViewModel item)
+    {
+        var favorites = _settings.Current.FavoriteTransformers;
+        favorites.RemoveAll(key => key == item.Transformer.Key);
+        if (item.IsFavorite)
+        {
+            favorites.Add(item.Transformer.Key);
+        }
+
+        _settings.Save();
+    }
+
     private void OnLanguageChanged(object? sender, EventArgs e)
     {
+        if (_transformersView is not null)
+        {
+            UpdateSortCulture(_transformersView);
+        }
+
         Title = ComposeTitle();
         OnPropertyChanged(nameof(SelectedDescription));
     }

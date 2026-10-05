@@ -4,12 +4,20 @@ using OpIlGen.Services;
 
 namespace OpIlGen.ViewModels;
 
-/// <summary>Элемент списка преобразователей: название обновляется при смене языка.</summary>
-public sealed class TransformerItemViewModel : ObservableObject
+/// <summary>Элемент списка преобразователей: название обновляется при смене языка, есть отметка «избранное».</summary>
+public sealed partial class TransformerItemViewModel : ObservableObject
 {
-    public TransformerItemViewModel(IImageTransformer transformer, ILocalizationService localizer)
+    private readonly Action<TransformerItemViewModel>? _onFavoriteChanged;
+
+    public TransformerItemViewModel(
+        IImageTransformer transformer,
+        ILocalizationService localizer,
+        bool isFavorite = false,
+        Action<TransformerItemViewModel>? onFavoriteChanged = null)
     {
         Transformer = transformer;
+        _isFavorite = isFavorite;
+        _onFavoriteChanged = onFavoriteChanged;
 
         localizer.LanguageChanged += (_, _) =>
         {
@@ -23,4 +31,10 @@ public sealed class TransformerItemViewModel : ObservableObject
     public string Name => Transformer.Name;
 
     public string Description => Transformer.Description;
+
+    /// <summary>Избранные преобразователи при сортировке всегда стоят выше остальных.</summary>
+    [ObservableProperty]
+    private bool _isFavorite;
+
+    partial void OnIsFavoriteChanged(bool value) => _onFavoriteChanged?.Invoke(this);
 }

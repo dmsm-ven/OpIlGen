@@ -91,6 +91,9 @@ public sealed class AppSettings
     /// <summary>Недавние музыкальные файлы (первый - текущий). Общие для всех преобразователей, до 8 штук.</summary>
     public List<string> MusicRecentTracks { get; set; } = new();
 
+    /// <summary>Ключи преобразователей, отмеченных звёздочкой: они всегда в начале списка.</summary>
+    public List<string> FavoriteTransformers { get; set; } = new();
+
     /// <summary>Путь к последнему выбранному музыкальному файлу.</summary>
     public string? MusicLastTrack { get; set; }
 
