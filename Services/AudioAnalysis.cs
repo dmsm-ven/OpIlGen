@@ -82,8 +82,11 @@ public sealed class AudioTrackAnalysis
 
 public interface IAudioAnalysisService
 {
-    /// <summary>Декодирует аудиофайл и считает уровни характеристик по времени (выполняется в фоне).</summary>
-    Task<AudioTrackAnalysis> AnalyzeAsync(string path, CancellationToken cancellationToken);
+    /// <summary>
+    /// Декодирует аудиофайл и считает уровни характеристик по времени (выполняется в фоне).
+    /// Возвращает null, если анализ отменён через <paramref name="cancellationToken"/>.
+    /// </summary>
+    Task<AudioTrackAnalysis?> AnalyzeAsync(string path, CancellationToken cancellationToken);
 }
 
 public sealed class AudioAnalysisService : IAudioAnalysisService
@@ -121,10 +124,13 @@ public sealed class AudioAnalysisService : IAudioAnalysisService
         (AudioFeature.Treble, 4000, 16000)
     ];
 
-    public Task<AudioTrackAnalysis> AnalyzeAsync(string path, CancellationToken cancellationToken)
-        => Task.Run(() => Analyze(path, cancellationToken), cancellationToken);
+    // Токен намеренно не передаётся в Task.Run, а отмена не бросает исключение: смена трека или закрытие окна
+    // во время анализа - обычная ситуация, а не ошибка. (Исключение отмены внутри задачи отладчик Visual Studio
+    // показывает как «необработанное в пользовательском коде», хотя оно перехватывается.)
+    public Task<AudioTrackAnalysis?> AnalyzeAsync(string path, CancellationToken cancellationToken)
+        => Task.Run(() => Analyze(path, cancellationToken));
 
-    private static AudioTrackAnalysis Analyze(string path, CancellationToken cancellationToken)
+    private static AudioTrackAnalysis? Analyze(string path, CancellationToken cancellationToken)
     {
         using var reader = new MediaFoundationReader(path);
         ISampleProvider samples = reader.ToSampleProvider();
@@ -161,7 +167,10 @@ public sealed class AudioAnalysisService : IAudioAnalysisService
         int read;
         while ((read = samples.Read(readBuffer, 0, readBuffer.Length)) > 0)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return null;
+            }
 
             int frames = read / channels;
             if (frames == 0)

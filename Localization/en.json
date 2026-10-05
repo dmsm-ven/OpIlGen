@@ -274,5 +274,7 @@
   "transformer.flow_field.var.rotation.name": "Field rotation, °",
   "transformer.flow_field.var.rotation.description": "Rotation of all field directions. Changes the overall tilt of the flow.",
   "music.source.fixed": "Fixed value",
-  "music.recent.empty": "Recent tracks will appear here"
+  "music.recent.empty": "Recent tracks will appear here",
+  "settings.file": "Settings file",
+  "settings.file.open": "Open settings file (view only)"
 }

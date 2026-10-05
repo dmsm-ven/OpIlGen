@@ -418,7 +418,7 @@ public partial class MusicViewModel : ObservableObject
         try
         {
             var result = await _analysisService.AnalyzeAsync(path, cts.Token);
-            if (cts.IsCancellationRequested)
+            if (result is null || cts.IsCancellationRequested)
             {
                 return;
             }

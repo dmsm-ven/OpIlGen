@@ -8,6 +8,9 @@ public interface ISettingsService
 {
     AppSettings Current { get; }
 
+    /// <summary>Полный путь к файлу настроек.</summary>
+    string FilePath { get; }
+
     /// <summary>Сохраняет текущие настройки на диск (ошибки записи не пробрасываются).</summary>
     void Save();
 }
@@ -32,6 +35,8 @@ public sealed class SettingsService : ISettingsService
     }
 
     public AppSettings Current { get; }
+
+    public string FilePath => SettingsPath;
 
     public void Save()
     {

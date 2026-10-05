@@ -274,5 +274,7 @@
   "transformer.flow_field.var.rotation.name": "Поворот поля, °",
   "transformer.flow_field.var.rotation.description": "Поворот направлений всего поля. Меняет общий наклон потока.",
   "music.source.fixed": "Фиксированное значение",
-  "music.recent.empty": "Недавние треки появятся здесь"
+  "music.recent.empty": "Недавние треки появятся здесь",
+  "settings.file": "Файл настроек",
+  "settings.file.open": "Открыть файл настроек (только просмотр)"
 }

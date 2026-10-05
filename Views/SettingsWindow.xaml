@@ -26,10 +26,28 @@
         </GroupBox>
 
         <!-- Язык: список строится из найденных языковых файлов (Localization/*.json) -->
-        <GroupBox Header="{loc:Loc settings.language}" Padding="4">
+        <GroupBox Header="{loc:Loc settings.language}" Margin="0,0,0,12" Padding="4">
             <ListBox ItemsSource="{Binding Languages}"
                      SelectedItem="{Binding SelectedLanguage}"
                      DisplayMemberPath="DisplayName" />
+        </GroupBox>
+
+        <!-- Файл настроек: путь (можно выделить и скопировать) и кнопка «открыть» только для просмотра -->
+        <GroupBox Header="{loc:Loc settings.file}" Padding="8">
+            <DockPanel LastChildFill="True">
+                <Button DockPanel.Dock="Right"
+                        Style="{StaticResource IconButton}"
+                        Content="&#xE8E5;"
+                        Margin="8,0,0,0"
+                        VerticalAlignment="Center"
+                        ToolTip="{loc:Loc settings.file.open}"
+                        Command="{Binding OpenSettingsFileCommand}" />
+                <TextBox Text="{Binding SettingsFilePath, Mode=OneWay}"
+                         IsReadOnly="True"
+                         TextWrapping="Wrap"
+                         VerticalContentAlignment="Center"
+                         ToolTip="{Binding SettingsFilePath}" />
+            </DockPanel>
         </GroupBox>
     </StackPanel>
 </Window>
