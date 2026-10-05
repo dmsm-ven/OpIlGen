@@ -28,10 +28,6 @@
                         ToolTip="{loc:Loc main.select_file}"
                         Command="{Binding SelectFileCommand}" />
                 <Button Style="{StaticResource IconButton}"
-                        Content="&#xE740;"
-                        ToolTip="{loc:Loc main.fullscreen}"
-                        Command="{Binding ShowFullScreenCommand}" />
-                <Button Style="{StaticResource IconButton}"
                         Content="&#xE838;"
                         ToolTip="{loc:Loc main.open_folder}"
                         Command="{Binding OpenOutputFolderCommand}" />
@@ -64,6 +60,10 @@
             <Border Grid.Column="0" Margin="0,0,12,0"
                     BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1"
                     Background="#FF202020">
+                <!-- Двойной клик по изображению открывает его на весь экран -->
+                <Border.InputBindings>
+                    <MouseBinding Gesture="LeftDoubleClick" Command="{Binding ShowFullScreenCommand}" />
+                </Border.InputBindings>
                 <Grid>
                     <Canvas x:Name="ResultCanvas" ClipToBounds="True">
                         <Image Source="{Binding ResultImage}"

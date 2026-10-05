@@ -117,6 +117,10 @@
                 Background="#FF202020"
                 BorderBrush="{DynamicResource ControlBorderBrush}"
                 BorderThickness="1">
+                <!--  Двойной клик по изображению открывает его на весь экран (картинка там продолжает меняться под музыку)  -->
+                <Border.InputBindings>
+                    <MouseBinding Command="{Binding ShowFullScreenCommand}" Gesture="LeftDoubleClick" />
+                </Border.InputBindings>
                 <Canvas x:Name="ResultCanvas" ClipToBounds="True">
                     <Image
                         Width="{Binding ActualWidth, ElementName=ResultCanvas}"

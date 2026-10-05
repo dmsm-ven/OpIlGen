@@ -1,7 +1,6 @@
 ﻿{
   "language.name": "Русский",
   "main.select_file": "Выбрать файл (.jpg / .png)",
-  "main.fullscreen": "Во весь экран",
   "main.open_folder": "Открыть папку с изображениями",
   "main.gif_generator": "Генератор GIF-анимации",
   "main.settings": "Настройки",

@@ -19,6 +19,9 @@ public partial class MusicViewModel : ObservableObject
     /// <summary>Картинка уменьшается до этой длинной стороны, чтобы пересчёт успевал ~10 раз в секунду.</summary>
     private const int PreviewMaxSide = 640;
 
+    /// <summary>В полноэкранном режиме картинка считается крупнее, иначе на большом экране она была бы мыльной.</summary>
+    private const int FullScreenPreviewMaxSide = 1280;
+
     /// <summary>Допустимые значения FPS (число обновлений изображения в секунду).</summary>
     public const double MinFps = 1;
     public const double MaxFps = 30;
@@ -46,6 +49,7 @@ public partial class MusicViewModel : ObservableObject
     private const double DefaultVolumePosition = 0.9;
 
     private readonly IFileDialogService _fileDialog;
+    private readonly IFullScreenService _fullScreen;
     private readonly IImageService _imageService;
     private readonly IAudioAnalysisService _analysisService;
     private readonly ILocalizationService _localizer;
@@ -55,6 +59,8 @@ public partial class MusicViewModel : ObservableObject
     private readonly Dictionary<AudioFeature, double> _smoothed = new();
 
     private BitmapSource? _baseImage;
+    private BitmapSource? _sourceImage;
+    private bool _isFullScreenOpen;
     private CancellationTokenSource? _analysisCts;
     private bool _isRendering;
     private bool _previewDirty;
@@ -65,6 +71,7 @@ public partial class MusicViewModel : ObservableObject
         string sourcePath,
         IImageTransformer transformer,
         IFileDialogService fileDialog,
+        IFullScreenService fullScreen,
         IImageService imageService,
         IAudioAnalysisService analysisService,
         ISettingsService settings,
@@ -73,6 +80,7 @@ public partial class MusicViewModel : ObservableObject
         SourcePath = sourcePath;
         Transformer = transformer;
         _fileDialog = fileDialog;
+        _fullScreen = fullScreen;
         _imageService = imageService;
         _analysisService = analysisService;
         _localizer = localizer;
@@ -151,6 +159,7 @@ public partial class MusicViewModel : ObservableObject
     public bool HasNoRecentTracks => RecentTracks.Count == 0;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ShowFullScreenCommand))]
     private BitmapSource? _resultImage;
 
     [ObservableProperty]
@@ -261,7 +270,8 @@ public partial class MusicViewModel : ObservableObject
     {
         try
         {
-            _baseImage = CreatePreview(_imageService.Load(SourcePath));
+            _sourceImage = _imageService.Load(SourcePath);
+            _baseImage = CreatePreview(_sourceImage, PreviewMaxSide);
             ResultImage = Transformer.Transform(_baseImage, BuildFixedVariables());
         }
         catch (Exception ex)
@@ -270,18 +280,55 @@ public partial class MusicViewModel : ObservableObject
         }
     }
 
-    private static BitmapSource CreatePreview(BitmapSource source)
+    private static BitmapSource CreatePreview(BitmapSource source, int maxSide)
     {
         double longSide = Math.Max(source.PixelWidth, source.PixelHeight);
-        if (longSide <= PreviewMaxSide)
+        if (longSide <= maxSide)
         {
             return source;
         }
 
-        double scale = PreviewMaxSide / longSide;
+        double scale = maxSide / longSide;
         var scaled = new TransformedBitmap(source, new ScaleTransform(scale, scale));
         scaled.Freeze();
         return scaled;
+    }
+
+    /// <summary>Двойной клик по холсту: изображение на весь экран. Оно обновляется вместе с музыкой.</summary>
+    [RelayCommand(CanExecute = nameof(CanShowFullScreen))]
+    private void ShowFullScreen()
+    {
+        if (_isFullScreenOpen || ResultImage is null)
+        {
+            return;
+        }
+
+        _isFullScreenOpen = true;
+        ApplyPreviewSize(FullScreenPreviewMaxSide);
+
+        _fullScreen.ShowLive(
+            this,
+            nameof(ResultImage),
+            () => ResultImage,
+            () =>
+            {
+                _isFullScreenOpen = false;
+                ApplyPreviewSize(PreviewMaxSide);
+            });
+    }
+
+    private bool CanShowFullScreen() => ResultImage is not null;
+
+    /// <summary>Меняет размер, в котором считается картинка. Следующий кадр уже будет с новым размером.</summary>
+    private void ApplyPreviewSize(int maxSide)
+    {
+        if (_sourceImage is null)
+        {
+            return;
+        }
+
+        _baseImage = CreatePreview(_sourceImage, maxSide);
+        RefreshPreview();
     }
 
     [RelayCommand]

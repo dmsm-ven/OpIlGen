@@ -9,6 +9,12 @@ public partial class FullScreenWindow : Window
     public FullScreenWindow(BitmapSource image)
     {
         InitializeComponent();
+        SetImage(image);
+    }
+
+    /// <summary>Подменяет изображение (для «живого» режима: картинка меняется, пока окно открыто).</summary>
+    public void SetImage(BitmapSource image)
+    {
         Picture.Source = image;
         ResolutionText.Text = $"{image.PixelWidth}×{image.PixelHeight}";
     }
