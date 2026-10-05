@@ -4,7 +4,7 @@ namespace OpIlGen.Services.Transformers;
 
 /// <summary>
 /// Вороной / stippling: изображение превращается в тысячи точек, расставленных плотнее в тёмных областях.
-/// Стили: чёрные точки на белом, ячейки Вороного со средним цветом, ячейки с контуром.
+/// Стили: чёрные точки, цветные ячейки Вороного, ячейки с контуром, круги (контур 1 px) и цветные точки.
 /// Расстановка детерминирована (фиксированный seed): одинаковые параметры дают одинаковую картинку.
 /// </summary>
 public sealed class VoronoiStipplingTransformer : PixelTransformerBase
@@ -36,7 +36,13 @@ public sealed class VoronoiStipplingTransformer : PixelTransformerBase
     private const double MinDotScale = 0.35;
 
     private const int StyleDots = 0;
+    private const int StyleCells = 1;
     private const int StyleOutlined = 2;
+    private const int StyleCircles = 3;
+    private const int StyleColoredDots = 4;
+
+    /// <summary>Толщина линии круга в пикселях (минимальная).</summary>
+    private const double RingThicknessPx = 1.0;
 
     private const byte OutlineGray = 30;
 
@@ -47,7 +53,7 @@ public sealed class VoronoiStipplingTransformer : PixelTransformerBase
         TransformerVariableFactory.Create(Id, "contrast", 0, DefaultContrast, 4, 0.1);
 
     private static readonly TransformerVariable StyleVariable =
-        TransformerVariableFactory.Create(Id, "style", 0, DefaultStyle, 2, 1);
+        TransformerVariableFactory.Create(Id, "style", 0, DefaultStyle, 4, 1);
 
     private static readonly TransformerVariable SizeVariable =
         TransformerVariableFactory.Create(Id, "size", 10, DefaultSizePercent, 100, 5);
@@ -77,9 +83,18 @@ public sealed class VoronoiStipplingTransformer : PixelTransformerBase
         double spacing = Math.Sqrt((double)width * height / points);
         var grid = BuildSites(lum, width, height, points, spacing, gamma);
 
-        return style == StyleDots
-            ? RenderDots(grid, lum, width, height, spacing, size)
-            : RenderCells(grid, pixels, width, height, style == StyleOutlined);
+        switch (style)
+        {
+            case StyleCells:
+            case StyleOutlined:
+                return RenderCells(grid, pixels, width, height, style == StyleOutlined);
+            case StyleCircles:
+                return RenderCircles(grid, BuildRadii(grid, lum, width, height, spacing, size), width, height);
+            case StyleColoredDots:
+                return RenderColoredDots(grid, pixels, BuildRadii(grid, lum, width, height, spacing, size), width, height);
+            default:
+                return RenderDots(grid, BuildRadii(grid, lum, width, height, spacing, size), width, height);
+        }
     }
 
     /// <summary>Расставляет точки: плотность по яркости, из нескольких кандидатов берётся самый удалённый от соседей.</summary>
@@ -163,7 +178,8 @@ public sealed class VoronoiStipplingTransformer : PixelTransformerBase
         }
     }
 
-    private static byte[] RenderDots(SiteGrid grid, float[] lum, int width, int height, double spacing, double size)
+    /// <summary>Радиус каждой точки: тёмнее - крупнее (в долях среднего расстояния между точками).</summary>
+    private static float[] BuildRadii(SiteGrid grid, float[] lum, int width, int height, double spacing, double size)
     {
         var radius = new float[grid.Count];
         for (int i = 0; i < grid.Count; i++)
@@ -174,6 +190,11 @@ public sealed class VoronoiStipplingTransformer : PixelTransformerBase
             radius[i] = (float)(DotRadiusFactor * spacing * size * (MinDotScale + (1 - MinDotScale) * darkness));
         }
 
+        return radius;
+    }
+
+    private static byte[] RenderDots(SiteGrid grid, float[] radius, int width, int height)
+    {
         var result = new byte[width * height * 4];
         Array.Fill(result, BitmapHelper.White);
 
@@ -192,7 +213,56 @@ public sealed class VoronoiStipplingTransformer : PixelTransformerBase
         return result;
     }
 
-    private static byte[] RenderCells(SiteGrid grid, byte[] pixels, int width, int height, bool outline)
+    /// <summary>Круги: только линия толщиной 1 px, без заливки. Круги целые и могут перекрываться.</summary>
+    private static byte[] RenderCircles(SiteGrid grid, float[] radius, int width, int height)
+    {
+        var result = new byte[width * height * 4];
+        Array.Fill(result, BitmapHelper.White);
+
+        Parallel.For(0, height, y =>
+        {
+            for (int x = 0; x < width; x++)
+            {
+                double coverage = grid.RingCoverage(x + 0.5, y + 0.5, radius, RingThicknessPx);
+                if (coverage > 0)
+                {
+                    BitmapHelper.SetGray(result, y * width + x, (byte)Math.Round(MaxLuminance * (1 - coverage)));
+                }
+            }
+        });
+
+        return result;
+    }
+
+    /// <summary>Как «точки», но каждая точка закрашена средним цветом своей ячейки.</summary>
+    private static byte[] RenderColoredDots(SiteGrid grid, byte[] pixels, float[] radius, int width, int height)
+    {
+        var cells = AnalyzeCells(grid, pixels, width, height);
+
+        var result = new byte[pixels.Length];
+        Array.Fill(result, BitmapHelper.White);
+
+        Parallel.For(0, height, y =>
+        {
+            for (int x = 0; x < width; x++)
+            {
+                int p = y * width + x;
+                int id = cells.Ids[p];
+                double dx = x + 0.5 - grid.X[id];
+                double dy = y + 0.5 - grid.Y[id];
+                if (dx * dx + dy * dy <= (double)radius[id] * radius[id])
+                {
+                    PixelSampler.SetPixel(result, p, cells.Blue[id], cells.Green[id], cells.Red[id]);
+                }
+            }
+        });
+
+        return result;
+    }
+
+    /// <summary>Для каждого пикселя - номер ближайшей точки, для каждой точки - средний цвет её ячейки.</summary>
+    private static (int[] Ids, float[] Blue, float[] Green, float[] Red) AnalyzeCells(
+        SiteGrid grid, byte[] pixels, int width, int height)
     {
         var ids = new int[width * height];
         Parallel.For(0, height, y =>
@@ -203,7 +273,6 @@ public sealed class VoronoiStipplingTransformer : PixelTransformerBase
             }
         });
 
-        // Средний цвет каждой ячейки
         var sumB = new long[grid.Count];
         var sumG = new long[grid.Count];
         var sumR = new long[grid.Count];
@@ -217,6 +286,26 @@ public sealed class VoronoiStipplingTransformer : PixelTransformerBase
             sumR[id] += pixels[o + 2];
             count[id]++;
         }
+
+        var blue = new float[grid.Count];
+        var green = new float[grid.Count];
+        var red = new float[grid.Count];
+        for (int i = 0; i < grid.Count; i++)
+        {
+            // У точки может не оказаться ни одного пикселя (очень плотные точки): цвет тогда не важен
+            int n = Math.Max(1, count[i]);
+            blue[i] = (float)sumB[i] / n;
+            green[i] = (float)sumG[i] / n;
+            red[i] = (float)sumR[i] / n;
+        }
+
+        return (ids, blue, green, red);
+    }
+
+    private static byte[] RenderCells(SiteGrid grid, byte[] pixels, int width, int height, bool outline)
+    {
+        var cells = AnalyzeCells(grid, pixels, width, height);
+        var ids = cells.Ids;
 
         var result = new byte[pixels.Length];
         for (int y = 0; y < height; y++)
@@ -235,9 +324,7 @@ public sealed class VoronoiStipplingTransformer : PixelTransformerBase
                 }
                 else
                 {
-                    PixelSampler.SetPixel(
-                        result, p,
-                        (float)sumB[id] / count[id], (float)sumG[id] / count[id], (float)sumR[id] / count[id]);
+                    PixelSampler.SetPixel(result, p, cells.Blue[id], cells.Green[id], cells.Red[id]);
                 }
             }
         }
@@ -281,6 +368,37 @@ public sealed class VoronoiStipplingTransformer : PixelTransformerBase
             int cell = Math.Clamp((int)(y / _cell), 0, _rows - 1) * _cols + Math.Clamp((int)(x / _cell), 0, _cols - 1);
             _next[id] = _head[cell];
             _head[cell] = id;
+        }
+
+        /// <summary>
+        /// Покрытие пикселя линиями кругов (0..1): максимум по всем точкам рядом. Радиусы кругов не превышают
+        /// размер корзины, поэтому достаточно соседних 3x3 корзин.
+        /// </summary>
+        public double RingCoverage(double x, double y, float[] radius, double thickness)
+        {
+            int cx = Math.Clamp((int)(x / _cell), 0, _cols - 1);
+            int cy = Math.Clamp((int)(y / _cell), 0, _rows - 1);
+            double best = 0;
+
+            for (int gy = Math.Max(0, cy - 1); gy <= Math.Min(_rows - 1, cy + 1); gy++)
+            {
+                for (int gx = Math.Max(0, cx - 1); gx <= Math.Min(_cols - 1, cx + 1); gx++)
+                {
+                    for (int s = _head[gy * _cols + gx]; s >= 0; s = _next[s])
+                    {
+                        double dx = X[s] - x;
+                        double dy = Y[s] - y;
+                        double distanceToLine = Math.Abs(Math.Sqrt(dx * dx + dy * dy) - radius[s]);
+                        double coverage = thickness / 2 + 0.5 - distanceToLine;
+                        if (coverage > best)
+                        {
+                            best = coverage;
+                        }
+                    }
+                }
+            }
+
+            return Math.Min(best, 1.0);
         }
 
         /// <summary>Ближайшая точка к (x, y) и квадрат расстояния до неё. -1, если точек нет.</summary>
