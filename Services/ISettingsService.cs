@@ -83,6 +83,9 @@ public sealed class AppSettings
     /// <summary>Значения параметров с привязкой «Фиксированное значение»: ключ преобразователя -> (ключ параметра -> значение).</summary>
     public Dictionary<string, Dictionary<string, double>> MusicFixedValues { get; set; } = new();
 
+    /// <summary>Недавние музыкальные файлы (первый - текущий). Общие для всех преобразователей, до 8 штук.</summary>
+    public List<string> MusicRecentTracks { get; set; } = new();
+
     /// <summary>Путь к последнему выбранному музыкальному файлу.</summary>
     public string? MusicLastTrack { get; set; }
 

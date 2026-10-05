@@ -274,5 +274,6 @@
   "transformer.flow_field.var.influence.description": "0 - линии текут по плавному «ветру» независимо от картинки. 100 - строго вдоль контуров изображения.",
   "transformer.flow_field.var.rotation.name": "Поворот поля, °",
   "transformer.flow_field.var.rotation.description": "Поворот направлений всего поля. Меняет общий наклон потока.",
-  "music.source.fixed": "Фиксированное значение"
+  "music.source.fixed": "Фиксированное значение",
+  "music.recent.empty": "Недавние треки появятся здесь"
 }

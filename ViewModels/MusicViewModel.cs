@@ -24,6 +24,9 @@ public partial class MusicViewModel : ObservableObject
     public const double MaxFps = 30;
     private const double DefaultFps = 10;
 
+    /// <summary>Сколько недавних треков помним: при переполнении вытесняется самый старый.</summary>
+    private const int MaxRecentTracks = 8;
+
     /// <summary>
     /// Коэффициенты сглаживания ниже подобраны для этого FPS. При другом FPS они пересчитываются,
     /// чтобы скорость реакции по времени оставалась той же.
@@ -87,6 +90,15 @@ public partial class MusicViewModel : ObservableObject
         Mappings = new ObservableCollection<MusicMappingRowViewModel>(
             transformer.AvailableCustomVariables.Select(v => new MusicMappingRowViewModel(v, localizer, options)));
         RestoreMappings();
+
+        RecentTracks = new ObservableCollection<RecentTrackViewModel>(
+            _settings.Current.MusicRecentTracks
+                .Where(File.Exists)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(MaxRecentTracks)
+                .Select(path => new RecentTrackViewModel(path)));
+        UpdateCurrentRecent();
+        RecentTracks.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasNoRecentTracks));
         foreach (var row in Mappings)
         {
             row.FixedStateChanged += (_, _) => RefreshPreview();
@@ -132,6 +144,11 @@ public partial class MusicViewModel : ObservableObject
     public ObservableCollection<MusicMappingRowViewModel> Mappings { get; }
 
     public bool HasMappings => Mappings.Count > 0;
+
+    /// <summary>Недавние треки для верхней панели; первый - выбранный сейчас.</summary>
+    public ObservableCollection<RecentTrackViewModel> RecentTracks { get; }
+
+    public bool HasNoRecentTracks => RecentTracks.Count == 0;
 
     [ObservableProperty]
     private BitmapSource? _resultImage;
@@ -279,6 +296,56 @@ public partial class MusicViewModel : ObservableObject
         await LoadTrackAsync(path);
     }
 
+    /// <summary>Клик по плитке недавнего трека: он становится текущим, как при выборе через «Выбрать файл...».</summary>
+    [RelayCommand]
+    private async Task SelectRecentAsync(RecentTrackViewModel? track)
+    {
+        if (track is null || track.IsCurrent)
+        {
+            return;
+        }
+
+        if (!File.Exists(track.Path))
+        {
+            // Файл удалён или недоступен: убираем плитку и сообщаем
+            RecentTracks.Remove(track);
+            UpdateCurrentRecent();
+            Status = string.Format(_localizer.Get("music.status.analysis_error"), track.Path);
+            return;
+        }
+
+        await LoadTrackAsync(track.Path);
+    }
+
+    /// <summary>Ставит трек первым в списке недавних (без дублей), лишние старые отбрасывает.</summary>
+    private void RegisterRecent(string path)
+    {
+        var existing = RecentTracks.FirstOrDefault(t => string.Equals(t.Path, path, StringComparison.OrdinalIgnoreCase));
+        if (existing is not null)
+        {
+            RecentTracks.Move(RecentTracks.IndexOf(existing), 0);
+        }
+        else
+        {
+            RecentTracks.Insert(0, new RecentTrackViewModel(path));
+        }
+
+        while (RecentTracks.Count > MaxRecentTracks)
+        {
+            RecentTracks.RemoveAt(RecentTracks.Count - 1);
+        }
+
+        UpdateCurrentRecent();
+    }
+
+    private void UpdateCurrentRecent()
+    {
+        for (int i = 0; i < RecentTracks.Count; i++)
+        {
+            RecentTracks[i].IsCurrent = i == 0;
+        }
+    }
+
     /// <summary>Открывает последний выбранный трек (если файл ещё существует). Вызывается при открытии окна.</summary>
     public async Task InitializeAsync()
     {
@@ -296,6 +363,7 @@ public partial class MusicViewModel : ObservableObject
         var cts = _analysisCts = new CancellationTokenSource();
 
         MusicPath = path;
+        RegisterRecent(path);
         Analysis = null;
         IsAnalyzing = true;
         Status = _localizer.Get("music.status.analyzing");
@@ -322,6 +390,14 @@ public partial class MusicViewModel : ObservableObject
         {
             if (!cts.IsCancellationRequested)
             {
+                // Нечитаемый файл в недавних не оставляем
+                var broken = RecentTracks.FirstOrDefault(t => string.Equals(t.Path, path, StringComparison.OrdinalIgnoreCase));
+                if (broken is not null)
+                {
+                    RecentTracks.Remove(broken);
+                    UpdateCurrentRecent();
+                }
+
                 Status = string.Format(_localizer.Get("music.status.analysis_error"), ex.Message);
             }
         }
@@ -569,6 +645,7 @@ public partial class MusicViewModel : ObservableObject
     {
         // FPS, громкость и привязки пишем на диск один раз при закрытии, а не на каждое изменение
         SaveMappings();
+        _settings.Current.MusicRecentTracks = RecentTracks.Select(t => t.Path).ToList();
         _settings.Save();
 
         _analysisCts?.Cancel();
