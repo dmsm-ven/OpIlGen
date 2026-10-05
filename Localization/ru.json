@@ -283,5 +283,21 @@
   "transformer.kaleidoscope.var.pattern_rotation.description": "Поворот всей структуры узора вместе с содержимым: секторы, ось или сетка плиток вращаются вокруг центра.",
   "transformer.kaleidoscope.var.blend.name": "Смешивание с оригиналом, %",
   "transformer.kaleidoscope.var.blend.description": "100 - только калейдоскоп, 0 - исходное изображение. Между ними плавный переход.",
-  "main.favorite": "Избранное (закрепить вверху списка)"
+  "main.favorite": "Избранное (закрепить вверху списка)",
+  "transformer.height_map.name": "Карта высот",
+  "transformer.height_map.description": "Изображение разбивается на ячейки (квадраты, соты или звёзды с ромбами). «Высокие» ячейки поднимаются и закрашиваются тёплым цветом, «низкие» опускаются и закрашиваются холодным, остальные остаются без заливки.",
+  "transformer.height_map.var.shape.name": "Тип фигуры (0 - квадраты, 1 - соты, 2 - звёзды и ромбы)",
+  "transformer.height_map.var.shape.description": "На какие ячейки разбивается изображение: квадратная решётка, шестиугольные соты или четырёхконечные звёзды с ромбовидными ячейками между ними.",
+  "transformer.height_map.var.size.name": "Размер фигур, px",
+  "transformer.height_map.var.size.description": "Сторона квадрата, расстояние между параллельными сторонами соты или расстояние между остриями звезды.",
+  "transformer.height_map.var.source.name": "Источник высоты (0 - яркость, 1 - соседи)",
+  "transformer.height_map.var.source.description": "0 - высота ячейки равна её средней яркости. 1 - высота зависит от того, насколько ячейка ярче или темнее соседних: подчёркивает контуры и работает на любой экспозиции.",
+  "transformer.height_map.var.raise_threshold.name": "Порог подъёма",
+  "transformer.height_map.var.raise_threshold.description": "Ячейки с высотой не ниже этого порога (0-100) поднимаются и закрашиваются тёплым цветом. Меньше значение - больше поднятых ячеек.",
+  "transformer.height_map.var.lower_threshold.name": "Порог впадины",
+  "transformer.height_map.var.lower_threshold.description": "Ячейки с высотой не выше этого порога (0-100) опускаются и закрашиваются холодным цветом. Больше значение - больше опущенных ячеек.",
+  "transformer.height_map.var.opacity.name": "Непрозрачность заливки, %",
+  "transformer.height_map.var.opacity.description": "Насколько плотно закрашены поднятые и опущенные ячейки. При малых значениях изображение под ними хорошо просвечивает.",
+  "transformer.height_map.var.invert.name": "Инверсия (0 - нет, 1 - да)",
+  "transformer.height_map.var.invert.description": "1 - поменять роли: тёмные ячейки поднимаются, светлые опускаются."
 }

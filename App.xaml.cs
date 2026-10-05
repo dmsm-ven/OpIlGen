@@ -90,6 +90,7 @@ public partial class App : Application
         services.AddSingleton<IImageTransformer, OpArtLinesTransformer>();
         services.AddSingleton<IImageTransformer, VoronoiStipplingTransformer>();
         services.AddSingleton<IImageTransformer, FlowFieldTransformer>();
+        services.AddSingleton<IImageTransformer, HeightMapTransformer>();
     }
 
 
