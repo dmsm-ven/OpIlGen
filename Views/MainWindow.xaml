@@ -15,10 +15,58 @@
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+        <!--  Плитка недавнего изображения: квадрат со скруглением; текущий выделен рамкой цвета выделения  -->
+        <Style x:Key="RecentImageTile" TargetType="Button">
+            <Setter Property="Width" Value="42" />
+            <Setter Property="Height" Value="42" />
+            <Setter Property="Margin" Value="3" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Border
+                                x:Name="Bd"
+                                Background="{DynamicResource HoverBrush}"
+                                BorderBrush="{DynamicResource ControlBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="10" />
+                            <Border
+                                x:Name="Hl"
+                                Background="Transparent"
+                                CornerRadius="10" />
+                            <iconsPack:PackIconMaterial
+                                Width="20"
+                                Height="20"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Foreground="{DynamicResource TextBrush}"
+                                Kind="FileJpgBox" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Hl" Property="Background" Value="{DynamicResource HoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Hl" Property="Background" Value="{DynamicResource PressedBrush}" />
+                            </Trigger>
+                            <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource SelectionBrush}" />
+                                <Setter TargetName="Bd" Property="BorderThickness" Value="2" />
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SelectionBrush}" />
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid Margin="12">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
@@ -66,8 +114,47 @@
             </Button>
         </DockPanel>
 
+        <!--  Недавние изображения (до 8). Первое - выбранное сейчас  -->
+        <Border
+            Grid.Row="1"
+            Height="60"
+            Margin="0,0,0,8"
+            Padding="4"
+            Background="{DynamicResource PanelBackgroundBrush}"
+            BorderBrush="{DynamicResource ControlBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="8">
+            <Grid>
+                <TextBlock
+                    Margin="8,0"
+                    VerticalAlignment="Center"
+                    Opacity="0.6"
+                    Text="{loc:Loc main.recent.empty}"
+                    TextTrimming="CharacterEllipsis"
+                    Visibility="{Binding HasNoRecentImages, Converter={StaticResource BoolToVisibility}}" />
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding RecentImages}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button
+                                    Command="{Binding DataContext.SelectRecentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    CommandParameter="{Binding}"
+                                    Style="{StaticResource RecentImageTile}"
+                                    ToolTip="{Binding ToolTipText}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
         <!--  Холст (5*) и список преобразователей (1.5*)  -->
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="5*" />
                 <ColumnDefinition Width="1.5*" />
@@ -166,7 +253,7 @@
 
         <!--  Описание выбранной иллюзии  -->
         <TextBlock
-            Grid.Row="2"
+            Grid.Row="3"
             MinHeight="40"
             Margin="0,8,0,0"
             Foreground="{DynamicResource SecondaryTextBrush}"

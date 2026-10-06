@@ -14,6 +14,7 @@ namespace OpIlGen.ViewModels;
 public partial class MainViewModel : ObservableObject
 {
     private const string AppName = "OpIlGen";
+    private const int MaxRecentImages = 8;
 
     private readonly IFileDialogService _fileDialog;
     private readonly IImageService _imageService;
@@ -72,12 +73,25 @@ public partial class MainViewModel : ObservableObject
             transformers.Select(t => new TransformerItemViewModel(t, localizer, favorites.Contains(t.Key), OnFavoriteChanged)));
         ConfigureTransformersSorting();
 
+        RecentImages = new ObservableCollection<RecentImageViewModel>(
+            _settings.Current.RecentImages
+                .Where(File.Exists)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(MaxRecentImages)
+                .Select(path => new RecentImageViewModel(path)));
+        RecentImages.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasNoRecentImages));
+
         SetStatus(() => _localizer.Get("status.select_image"));
         // Первый в отсортированном списке (избранные, затем по алфавиту), а не в порядке регистрации
         SelectedTransformer = _transformersView!.Cast<TransformerItemViewModel>().FirstOrDefault()?.Transformer;
     }
 
     public ObservableCollection<TransformerItemViewModel> Transformers { get; }
+
+    /// <summary>Недавние изображения (первое - выбранное сейчас).</summary>
+    public ObservableCollection<RecentImageViewModel> RecentImages { get; }
+
+    public bool HasNoRecentImages => RecentImages.Count == 0;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(OpenGifGeneratorCommand))]
@@ -112,7 +126,15 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _title = AppName;
 
-    partial void OnSourcePathChanged(string? value) => RequestTransform();
+    partial void OnSourcePathChanged(string? value)
+    {
+        if (!string.IsNullOrEmpty(value))
+        {
+            RegisterRecentImage(value);
+        }
+
+        RequestTransform();
+    }
 
     partial void OnSelectedTransformerChanged(IImageTransformer? value)
     {
@@ -200,6 +222,65 @@ public partial class MainViewModel : ObservableObject
         {
             SourcePath = path;
         }
+    }
+
+    /// <summary>Клик по плитке недавнего изображения: оно становится текущим, как при выборе через «Выбрать файл...».</summary>
+    [RelayCommand]
+    private void SelectRecent(RecentImageViewModel? image)
+    {
+        if (image is null || image.IsCurrent)
+        {
+            return;
+        }
+
+        if (!File.Exists(image.Path))
+        {
+            // Файл удалён или недоступен: убираем плитку и сообщаем
+            RecentImages.Remove(image);
+            UpdateCurrentRecent();
+            SaveRecentImages();
+            var path = image.Path;
+            SetStatus(() => _localizer.Format("status.image_missing", path));
+            return;
+        }
+
+        SourcePath = image.Path;
+    }
+
+    /// <summary>Ставит изображение первым в списке недавних (без дублей), лишние старые отбрасывает.</summary>
+    private void RegisterRecentImage(string path)
+    {
+        var existing = RecentImages.FirstOrDefault(i => string.Equals(i.Path, path, StringComparison.OrdinalIgnoreCase));
+        if (existing is not null)
+        {
+            RecentImages.Move(RecentImages.IndexOf(existing), 0);
+        }
+        else
+        {
+            RecentImages.Insert(0, new RecentImageViewModel(path));
+        }
+
+        while (RecentImages.Count > MaxRecentImages)
+        {
+            RecentImages.RemoveAt(RecentImages.Count - 1);
+        }
+
+        UpdateCurrentRecent();
+        SaveRecentImages();
+    }
+
+    private void UpdateCurrentRecent()
+    {
+        for (int i = 0; i < RecentImages.Count; i++)
+        {
+            RecentImages[i].IsCurrent = i == 0 && !string.IsNullOrEmpty(SourcePath);
+        }
+    }
+
+    private void SaveRecentImages()
+    {
+        _settings.Current.RecentImages = RecentImages.Select(i => i.Path).ToList();
+        _settings.Save();
     }
 
     [RelayCommand(CanExecute = nameof(CanShowFullScreen))]

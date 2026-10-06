@@ -284,6 +284,8 @@
   "transformer.kaleidoscope.var.blend.name": "Blend with original, %",
   "transformer.kaleidoscope.var.blend.description": "100 - kaleidoscope only, 0 - the original image. A smooth transition in between.",
   "main.favorite": "Favorite (pin to the top of the list)",
+  "status.image_missing": "File not found: {0}",
+  "main.recent.empty": "Recent images will appear here",
   "transformer.height_map.name": "Height map",
   "transformer.height_map.description": "The image is split into cells (squares, honeycomb or stars with rhombi). High cells rise above the surface like columns and are tinted warm, low cells sink like pits and are tinted cool, the rest stay unfilled.",
   "transformer.height_map.var.shape.name": "Shape (0 - squares, 1 - honeycomb, 2 - stars and rhombi)",
