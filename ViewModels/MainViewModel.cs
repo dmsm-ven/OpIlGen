@@ -15,6 +15,7 @@ public partial class MainViewModel : ObservableObject
 {
     private const string AppName = "OpIlGen";
     private const int MaxRecentImages = 8;
+    private const string OriginalTransformerKey = "original";
 
     private readonly IFileDialogService _fileDialog;
     private readonly IImageService _imageService;
@@ -69,8 +70,16 @@ public partial class MainViewModel : ObservableObject
         _localizer.LanguageChanged += OnLanguageChanged;
 
         var favorites = new HashSet<string>(_settings.Current.FavoriteTransformers);
+        var allTransformers = transformers.ToList();
+
+        // «Оригинальное фото» вынесено из списка: оно всегда над ним и без звёздочки «избранное»
+        var original = allTransformers.FirstOrDefault(t => t.Key == OriginalTransformerKey);
+        OriginalItem = original is null ? null : new TransformerItemViewModel(original, localizer);
+
         Transformers = new ObservableCollection<TransformerItemViewModel>(
-            transformers.Select(t => new TransformerItemViewModel(t, localizer, favorites.Contains(t.Key), OnFavoriteChanged)));
+            allTransformers
+                .Where(t => t.Key != OriginalTransformerKey)
+                .Select(t => new TransformerItemViewModel(t, localizer, favorites.Contains(t.Key), OnFavoriteChanged)));
         ConfigureTransformersSorting();
 
         RecentImages = new ObservableCollection<RecentImageViewModel>(
@@ -82,11 +91,20 @@ public partial class MainViewModel : ObservableObject
         RecentImages.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasNoRecentImages));
 
         SetStatus(() => _localizer.Get("status.select_image"));
-        // Первый в отсортированном списке (избранные, затем по алфавиту), а не в порядке регистрации
-        SelectedTransformer = _transformersView!.Cast<TransformerItemViewModel>().FirstOrDefault()?.Transformer;
+        // По умолчанию - оригинал; если его нет, первый в отсортированном списке (избранные, затем по алфавиту)
+        SelectedTransformer = OriginalItem?.Transformer
+            ?? _transformersView!.Cast<TransformerItemViewModel>().FirstOrDefault()?.Transformer;
     }
 
     public ObservableCollection<TransformerItemViewModel> Transformers { get; }
+
+    /// <summary>«Оригинальное фото»: показывается отдельно над списком преобразователей.</summary>
+    public TransformerItemViewModel? OriginalItem { get; }
+
+    public bool HasOriginal => OriginalItem is not null;
+
+    /// <summary>Сейчас выбран «оригинал» (подсвечивает кнопку над списком).</summary>
+    public bool IsOriginalSelected => OriginalItem is not null && SelectedTransformer?.Key == OriginalTransformerKey;
 
     /// <summary>Недавние изображения (первое - выбранное сейчас).</summary>
     public ObservableCollection<RecentImageViewModel> RecentImages { get; }
@@ -102,6 +120,7 @@ public partial class MainViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(OpenGifGeneratorCommand))]
     [NotifyCanExecuteChangedFor(nameof(OpenMusicWindowCommand))]
     [NotifyPropertyChangedFor(nameof(SelectedDescription))]
+    [NotifyPropertyChangedFor(nameof(IsOriginalSelected))]
     private IImageTransformer? _selectedTransformer;
 
     /// <summary>Описание выбранного преобразователя на текущем языке.</summary>
@@ -221,6 +240,15 @@ public partial class MainViewModel : ObservableObject
         if (path is not null)
         {
             SourcePath = path;
+        }
+    }
+
+    [RelayCommand]
+    private void SelectOriginal()
+    {
+        if (OriginalItem is not null)
+        {
+            SelectedTransformer = OriginalItem.Transformer;
         }
     }
 
