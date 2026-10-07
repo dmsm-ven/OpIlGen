@@ -1,4 +1,4 @@
-// ==UserScript==
+﻿// ==UserScript==
 // @name         OpIlGen: открыть изображение в программе
 // @namespace    https://github.com/dmsm-ven/OpIlGen
 // @version      1.0.0
@@ -15,7 +15,7 @@
 
     // ---- Настройки ----
     const LABEL = 'Открыть в OpIlGen';
-    const BUTTON_OPACITY = 0.95;   // в покое; при наведении кнопка становится полностью непрозрачной
+    const BUTTON_OPACITY = 0.25;   // в покое; при наведении кнопка становится полностью непрозрачной
     const SCHEME = 'opilgen';
     const SUPPORTED_TYPES = /^image\/(jpeg|png|gif|bmp|tiff)/i; // форматы, которые умеет открывать WPF
 
