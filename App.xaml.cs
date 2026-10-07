@@ -11,6 +11,7 @@ namespace OpIlGen;
 public partial class App : Application
 {
     private ServiceProvider? _serviceProvider;
+    private SingleInstance? _singleInstance;
 
     /// <summary>Контейнер зависимостей (нужен расширению разметки {loc:Loc ...}).</summary>
     public IServiceProvider Services =>
@@ -19,6 +20,15 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Только один экземпляр: повторный запуск передаёт аргументы (например, ссылку из браузера) первому и закрывается
+        _singleInstance = new SingleInstance();
+        if (!_singleInstance.IsFirst)
+        {
+            _singleInstance.SendToFirst(e.Args);
+            Shutdown();
+            return;
+        }
 
         var services = new ServiceCollection();
         ConfigureServices(services);
@@ -37,6 +47,22 @@ public partial class App : Application
         if (OpenImageRequest.TryFindUrl(e.Args, out var imageUrl))
         {
             _ = _serviceProvider.GetRequiredService<MainViewModel>().OpenFromUrlAsync(imageUrl);
+        }
+
+        _singleInstance.StartListening(args => Dispatcher.BeginInvoke(() => OnSecondInstanceStarted(args)));
+    }
+
+    /// <summary>Приложение уже запущено, а его открыли снова: поднимаем окно и, если передана ссылка, открываем изображение.</summary>
+    private void OnSecondInstanceStarted(string[] args)
+    {
+        if (MainWindow is { } window)
+        {
+            SingleInstance.BringToFront(window);
+        }
+
+        if (OpenImageRequest.TryFindUrl(args, out var imageUrl))
+        {
+            _ = Services.GetRequiredService<MainViewModel>().OpenFromUrlAsync(imageUrl);
         }
     }
 
@@ -104,6 +130,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _serviceProvider?.Dispose();
+        _singleInstance?.Dispose();
         base.OnExit(e);
     }
 }
