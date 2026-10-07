@@ -15,6 +15,9 @@ public partial class MainViewModel : ObservableObject
 {
     private const string AppName = "OpIlGen";
     private const int MaxRecentImages = 8;
+
+    // Выбор идёт кликом по плитке недавнего изображения (порядок списка не меняется)
+    private bool _isSelectingRecent;
     private const string OriginalTransformerKey = "original";
 
     private readonly IFileDialogService _fileDialog;
@@ -152,7 +155,7 @@ public partial class MainViewModel : ObservableObject
     {
         if (!string.IsNullOrEmpty(value))
         {
-            RegisterRecentImage(value);
+            RegisterRecentImage(value, promoteToFront: !_isSelectingRecent);
         }
 
         RequestTransform();
@@ -256,6 +259,7 @@ public partial class MainViewModel : ObservableObject
             if (string.Equals(SourcePath, path, StringComparison.OrdinalIgnoreCase))
             {
                 // Та же ссылка открыта повторно: путь не изменился, поэтому обновляем результат вручную
+                RegisterRecentImage(path, promoteToFront: true);
                 RequestTransform();
             }
             else
@@ -299,20 +303,33 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        SourcePath = image.Path;
+        // Клик по плитке: изображение выделяется, но остаётся на своём месте в списке
+        _isSelectingRecent = true;
+        try
+        {
+            SourcePath = image.Path;
+        }
+        finally
+        {
+            _isSelectingRecent = false;
+        }
     }
 
-    /// <summary>Ставит изображение первым в списке недавних (без дублей), лишние старые отбрасывает.</summary>
-    private void RegisterRecentImage(string path)
+    /// <summary>
+    /// Новое изображение ставится первым в списке недавних, лишние старые отбрасываются. Уже известное
+    /// переезжает на первое место только при <paramref name="promoteToFront"/> (выбор через «Выбрать файл...»
+    /// или из браузера), при клике по плитке порядок не меняется.
+    /// </summary>
+    private void RegisterRecentImage(string path, bool promoteToFront)
     {
         var existing = RecentImages.FirstOrDefault(i => string.Equals(i.Path, path, StringComparison.OrdinalIgnoreCase));
-        if (existing is not null)
-        {
-            RecentImages.Move(RecentImages.IndexOf(existing), 0);
-        }
-        else
+        if (existing is null)
         {
             RecentImages.Insert(0, new RecentImageViewModel(path));
+        }
+        else if (promoteToFront)
+        {
+            RecentImages.Move(RecentImages.IndexOf(existing), 0);
         }
 
         while (RecentImages.Count > MaxRecentImages)
@@ -328,13 +345,15 @@ public partial class MainViewModel : ObservableObject
     {
         for (int i = 0; i < RecentImages.Count; i++)
         {
-            RecentImages[i].IsCurrent = i == 0 && !string.IsNullOrEmpty(SourcePath);
+            RecentImages[i].IsCurrent = !string.IsNullOrEmpty(SourcePath)
+                && string.Equals(RecentImages[i].Path, SourcePath, StringComparison.OrdinalIgnoreCase);
         }
     }
 
     private void SaveRecentImages()
     {
-        _settings.Current.RecentImages = RecentImages.Select(i => i.Path).ToList();
+        // В файл текущее изображение пишем первым: при следующем запуске оно стоит в начале списка
+        _settings.Current.RecentImages = RecentImages.OrderByDescending(i => i.IsCurrent).Select(i => i.Path).ToList();
         _settings.Save();
     }
 

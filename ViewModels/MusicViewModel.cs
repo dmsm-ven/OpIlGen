@@ -340,10 +340,11 @@ public partial class MusicViewModel : ObservableObject
             return;
         }
 
-        await LoadTrackAsync(path);
+        // Выбор через «Выбрать файл...»: трек становится первым в списке недавних
+        await LoadTrackAsync(path, promoteToFront: true);
     }
 
-    /// <summary>Клик по плитке недавнего трека: он становится текущим, как при выборе через «Выбрать файл...».</summary>
+    /// <summary>Клик по плитке недавнего трека: он становится текущим (выделен), но остаётся на своём месте в списке.</summary>
     [RelayCommand]
     private async Task SelectRecentAsync(RecentTrackViewModel? track)
     {
@@ -364,17 +365,21 @@ public partial class MusicViewModel : ObservableObject
         await LoadTrackAsync(track.Path);
     }
 
-    /// <summary>Ставит трек первым в списке недавних (без дублей), лишние старые отбрасывает.</summary>
-    private void RegisterRecent(string path)
+    /// <summary>
+    /// Новый трек ставится первым в списке недавних, лишние старые отбрасываются. Уже известный трек
+    /// переезжает на первое место только при <paramref name="promoteToFront"/> (выбор через «Выбрать файл...»),
+    /// при клике по плитке порядок не меняется.
+    /// </summary>
+    private void RegisterRecent(string path, bool promoteToFront)
     {
         var existing = RecentTracks.FirstOrDefault(t => string.Equals(t.Path, path, StringComparison.OrdinalIgnoreCase));
-        if (existing is not null)
-        {
-            RecentTracks.Move(RecentTracks.IndexOf(existing), 0);
-        }
-        else
+        if (existing is null)
         {
             RecentTracks.Insert(0, new RecentTrackViewModel(path));
+        }
+        else if (promoteToFront)
+        {
+            RecentTracks.Move(RecentTracks.IndexOf(existing), 0);
         }
 
         while (RecentTracks.Count > MaxRecentTracks)
@@ -389,7 +394,8 @@ public partial class MusicViewModel : ObservableObject
     {
         for (int i = 0; i < RecentTracks.Count; i++)
         {
-            RecentTracks[i].IsCurrent = i == 0;
+            RecentTracks[i].IsCurrent = !string.IsNullOrEmpty(MusicPath)
+                && string.Equals(RecentTracks[i].Path, MusicPath, StringComparison.OrdinalIgnoreCase);
         }
     }
 
@@ -403,14 +409,14 @@ public partial class MusicViewModel : ObservableObject
         }
     }
 
-    private async Task LoadTrackAsync(string path)
+    private async Task LoadTrackAsync(string path, bool promoteToFront = false)
     {
         StopInternal();
         _analysisCts?.Cancel();
         var cts = _analysisCts = new CancellationTokenSource();
 
         MusicPath = path;
-        RegisterRecent(path);
+        RegisterRecent(path, promoteToFront);
         Analysis = null;
         IsAnalyzing = true;
         Status = _localizer.Get("music.status.analyzing");
@@ -692,7 +698,8 @@ public partial class MusicViewModel : ObservableObject
     {
         // FPS, громкость и привязки пишем на диск один раз при закрытии, а не на каждое изменение
         SaveMappings();
-        _settings.Current.MusicRecentTracks = RecentTracks.Select(t => t.Path).ToList();
+        // В файл текущий трек пишем первым: при следующем запуске он стоит в начале списка
+        _settings.Current.MusicRecentTracks = RecentTracks.OrderByDescending(t => t.IsCurrent).Select(t => t.Path).ToList();
         _settings.Save();
 
         _analysisCts?.Cancel();

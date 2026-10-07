@@ -19,7 +19,7 @@ public partial class RecentTrackViewModel : ObservableObject
 
     public string ToolTipText { get; }
 
-    /// <summary>Трек выбран сейчас (всегда первая плитка).</summary>
+    /// <summary>Трек выбран сейчас (выделен синим). Не обязательно первая плитка.</summary>
     [ObservableProperty]
     private bool _isCurrent;
 }

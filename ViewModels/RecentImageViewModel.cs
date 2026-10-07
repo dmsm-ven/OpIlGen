@@ -19,7 +19,7 @@ public partial class RecentImageViewModel : ObservableObject
 
     public string ToolTipText { get; }
 
-    /// <summary>Изображение выбрано сейчас (всегда первая плитка).</summary>
+    /// <summary>Изображение выбрано сейчас (выделено синим). Не обязательно первая плитка.</summary>
     [ObservableProperty]
     private bool _isCurrent;
 }
