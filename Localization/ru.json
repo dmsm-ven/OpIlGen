@@ -11,6 +11,8 @@
   "status.saving": "{0} (сохранение...)",
   "status.error": "Ошибка: {0}",
   "status.save_error": "Ошибка сохранения: {0}",
+  "status.downloading": "Загрузка изображения: {0}",
+  "status.download_failed": "Не удалось загрузить изображение: {0}",
   "dialog.select_image.title": "Выберите изображение",
   "dialog.select_image.filter": "Изображения (*.jpg;*.jpeg;*.png)|*.jpg;*.jpeg;*.png",
   "fullscreen.title": "OpIlGen (Esc или двойной клик - закрыть)",

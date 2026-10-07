@@ -32,6 +32,12 @@ public partial class App : Application
         // Главное окно создаётся через DI
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         mainWindow.Show();
+
+        // Запуск по ссылке opilgen://... (кнопка «Открыть в OpIlGen» в браузере): скачиваем и открываем изображение
+        if (OpenImageRequest.TryFindUrl(e.Args, out var imageUrl))
+        {
+            _ = _serviceProvider.GetRequiredService<MainViewModel>().OpenFromUrlAsync(imageUrl);
+        }
     }
 
     private static void ConfigureServices(IServiceCollection services)
@@ -40,6 +46,7 @@ public partial class App : Application
         services.AddSingleton<ILocalizationService>(_ => LocalizationService.CreateFromEmbeddedResources());
         services.AddSingleton<IFileDialogService, FileDialogService>();
         services.AddSingleton<IImageService, ImageService>();
+        services.AddSingleton<IImageDownloadService, ImageDownloadService>();
         services.AddSingleton<IFullScreenService, FullScreenService>();
         services.AddSingleton<IShellService, ShellService>();
         services.AddSingleton<IGifService, GifService>();

@@ -1,0 +1,19 @@
+﻿Windows Registry Editor Version 5.00
+
+; Регистрация схемы opilgen:// для текущего пользователя (права администратора не нужны).
+; Перед импортом замените путь к OpIlGen.exe на свой (в .reg-файле обратные слэши удваиваются).
+; Удаление: удалить ветку HKEY_CURRENT_USER\Software\Classes\opilgen
+
+[HKEY_CURRENT_USER\Software\Classes\opilgen]
+@="URL:OpIlGen Protocol"
+"URL Protocol"=""
+
+[HKEY_CURRENT_USER\Software\Classes\opilgen\DefaultIcon]
+@="\"C:\\Path\\To\\OpIlGen.exe\",0"
+
+[HKEY_CURRENT_USER\Software\Classes\opilgen\shell]
+
+[HKEY_CURRENT_USER\Software\Classes\opilgen\shell\open]
+
+[HKEY_CURRENT_USER\Software\Classes\opilgen\shell\open\command]
+@="\"C:\\Path\\To\\OpIlGen.exe\" \"%1\""

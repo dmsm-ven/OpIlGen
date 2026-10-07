@@ -11,6 +11,8 @@
   "status.saving": "{0} (saving...)",
   "status.error": "Error: {0}",
   "status.save_error": "Save error: {0}",
+  "status.downloading": "Downloading image: {0}",
+  "status.download_failed": "Failed to download the image: {0}",
   "dialog.select_image.title": "Select an image",
   "dialog.select_image.filter": "Images (*.jpg;*.jpeg;*.png)|*.jpg;*.jpeg;*.png",
   "fullscreen.title": "OpIlGen (Esc or double click to close)",

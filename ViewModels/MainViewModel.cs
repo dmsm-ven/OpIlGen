@@ -19,6 +19,7 @@ public partial class MainViewModel : ObservableObject
 
     private readonly IFileDialogService _fileDialog;
     private readonly IImageService _imageService;
+    private readonly IImageDownloadService _downloader;
     private readonly IFullScreenService _fullScreen;
     private readonly IShellService _shell;
     private readonly IGifGeneratorWindowService _gifGenerator;
@@ -48,6 +49,7 @@ public partial class MainViewModel : ObservableObject
     public MainViewModel(
         IFileDialogService fileDialog,
         IImageService imageService,
+        IImageDownloadService downloader,
         IFullScreenService fullScreen,
         IShellService shell,
         IGifGeneratorWindowService gifGenerator,
@@ -59,6 +61,7 @@ public partial class MainViewModel : ObservableObject
     {
         _fileDialog = fileDialog;
         _imageService = imageService;
+        _downloader = downloader;
         _fullScreen = fullScreen;
         _shell = shell;
         _gifGenerator = gifGenerator;
@@ -240,6 +243,30 @@ public partial class MainViewModel : ObservableObject
         if (path is not null)
         {
             SourcePath = path;
+        }
+    }
+
+    /// <summary>Скачивает изображение по ссылке (например, из браузера) и делает его текущим, как при выборе файла.</summary>
+    public async Task OpenFromUrlAsync(Uri url)
+    {
+        SetStatus(() => _localizer.Format("status.downloading", url.AbsoluteUri));
+        try
+        {
+            var path = await _downloader.DownloadAsync(url);
+            if (string.Equals(SourcePath, path, StringComparison.OrdinalIgnoreCase))
+            {
+                // Та же ссылка открыта повторно: путь не изменился, поэтому обновляем результат вручную
+                RequestTransform();
+            }
+            else
+            {
+                SourcePath = path;
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            var message = ex.Message;
+            SetStatus(() => _localizer.Format("status.download_failed", message));
         }
     }
 
