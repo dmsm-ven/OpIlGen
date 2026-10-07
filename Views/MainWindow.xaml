@@ -43,7 +43,7 @@
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
                                 Foreground="{DynamicResource TextBrush}"
-                                Kind="FileJpgBox" />
+                                Kind="Wallpaper" />
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -129,25 +129,25 @@
                     Command="{Binding SelectFileCommand}"
                     Style="{StaticResource IconButton}"
                     ToolTip="{loc:Loc main.select_file}">
-                    <iconsPack:PackIconMaterial Kind="FileJpgBox" />
+                    <iconsPack:PackIconMaterial Kind="Wallpaper" />
                 </Button>
                 <Button
                     Command="{Binding OpenOutputFolderCommand}"
                     Style="{StaticResource IconButton}"
                     ToolTip="{loc:Loc main.open_folder}">
-                    <iconsPack:PackIconMaterial Kind="OpenInApp" />
+                    <iconsPack:PackIconMaterial Kind="Folder" />
                 </Button>
                 <Button
                     Command="{Binding OpenGifGeneratorCommand}"
                     Style="{StaticResource IconButton}"
                     ToolTip="{loc:Loc main.gif_generator}">
-                    <iconsPack:PackIconMaterial Kind="Motion" />
+                    <iconsPack:PackIconMaterial Kind="Animation" />
                 </Button>
                 <Button
                     Command="{Binding OpenMusicWindowCommand}"
                     Style="{StaticResource IconButton}"
                     ToolTip="{loc:Loc main.music}">
-                    <iconsPack:PackIconMaterial Kind="Play" />
+                    <iconsPack:PackIconMaterial Kind="MusicNote" />
                 </Button>
             </StackPanel>
 
@@ -275,7 +275,7 @@
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <DockPanel>
-                                    <!-- Звёздочка: избранный преобразователь закрепляется вверху списка -->
+                                    <!--  Звёздочка: избранный преобразователь закрепляется вверху списка  -->
                                     <ToggleButton
                                         Margin="0,0,6,0"
                                         DockPanel.Dock="Left"
