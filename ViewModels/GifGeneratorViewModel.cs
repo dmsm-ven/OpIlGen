@@ -17,6 +17,24 @@ public partial class GifGeneratorViewModel : ObservableObject
 {
     private const double DefaultFrameDelayMs = 200;
 
+    // Кнопки-функции под заголовком столбца: иконка - маленький график функции в координатах 16x16
+    private static readonly (GifValuePattern Pattern, string TooltipKey, Geometry Icon)[] PatternOptions =
+    {
+        (GifValuePattern.RampUp, "gif.pattern.ramp_up", Icon("M1,14 L15,2")),
+        (GifValuePattern.RampDown, "gif.pattern.ramp_down", Icon("M1,2 L15,14")),
+        (GifValuePattern.Sine, "gif.pattern.sine", Icon("M1,14 C5,14 5,2 8,2 C11,2 11,14 15,14")),
+        (GifValuePattern.SineInverted, "gif.pattern.sine_inverted", Icon("M1,2 C5,2 5,14 8,14 C11,14 11,2 15,2")),
+        (GifValuePattern.Triangle, "gif.pattern.triangle", Icon("M1,14 L8,2 L15,14")),
+        (GifValuePattern.SmoothStep, "gif.pattern.smooth_step", Icon("M1,14 C8,14 8,2 15,2"))
+    };
+
+    private static Geometry Icon(string data)
+    {
+        var geometry = Geometry.Parse(data);
+        geometry.Freeze();
+        return geometry;
+    }
+
     /// <summary>Сколько промежуточных кадров добавляется на каждый переход по умолчанию.</summary>
     private const double DefaultTransitionFrames = 5;
 
@@ -50,6 +68,8 @@ public partial class GifGeneratorViewModel : ObservableObject
         _localizer = localizer;
         _status = localizer.Get("gif.status.initial");
 
+        Columns = transformer.AvailableCustomVariables.Select(CreateColumn).ToArray();
+
         Frames.CollectionChanged += (_, _) => OnPropertyChanged(nameof(Summary));
     }
 
@@ -58,9 +78,7 @@ public partial class GifGeneratorViewModel : ObservableObject
     public string TransformerName => _transformer.Name;
 
     /// <summary>Столбцы таблицы: параметры преобразователя.</summary>
-    public IReadOnlyList<GifColumn> Columns => _transformer.AvailableCustomVariables
-        .Select(v => new GifColumn(_localizer.GetName(v), _localizer.GetDescription(v), v.MinValue, v.MaxValue))
-        .ToArray();
+    public IReadOnlyList<GifColumn> Columns { get; }
 
     /// <summary>У преобразователя нет параметров - кадры отличаются только яркостью в режиме Fade.</summary>
     public bool HasNoVariables => _transformer.AvailableCustomVariables.Length == 0;
@@ -136,6 +154,49 @@ public partial class GifGeneratorViewModel : ObservableObject
 
         Renumber();
         Status = _localizer.Format("gif.status.frames_added", Frames.Count);
+    }
+
+    private GifColumn CreateColumn(TransformerVariable variable, int index)
+    {
+        var patterns = PatternOptions
+            .Select(o => new GifPatternButton(
+                _localizer.Get(o.TooltipKey),
+                o.Icon,
+                new RelayCommand(() => ApplyPattern(index, o.Pattern))))
+            .ToArray();
+
+        return new GifColumn(
+            _localizer.GetName(variable),
+            _localizer.GetDescription(variable),
+            variable.MinValue,
+            variable.MaxValue,
+            patterns);
+    }
+
+    /// <summary>Заполняет весь столбец значениями функции: от минимума до максимума параметра по всем кадрам.</summary>
+    private void ApplyPattern(int columnIndex, GifValuePattern pattern)
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        if (Frames.Count < 2)
+        {
+            Status = _localizer.Get("gif.pattern.need_frames");
+            return;
+        }
+
+        var column = Columns[columnIndex];
+        var variable = _transformer.AvailableCustomVariables[columnIndex];
+        var values = GifValuePatterns.Fill(pattern, Frames.Count, variable.MinValue, variable.MaxValue, variable.Step);
+
+        for (int i = 0; i < Frames.Count; i++)
+        {
+            Frames[i].Cells[columnIndex].Value = values[i];
+        }
+
+        Status = _localizer.Format("gif.pattern.applied", column.Name);
     }
 
     private void RemoveFrame(GifFrameViewModel frame)
@@ -300,4 +361,12 @@ public sealed class GifCellViewModel : ObservableObject
 }
 
 /// <summary>Заголовок столбца таблицы: параметр преобразователя (текст уже на текущем языке).</summary>
-public sealed record GifColumn(string Name, string Description, double MinValue, double MaxValue);
+public sealed record GifColumn(
+    string Name,
+    string Description,
+    double MinValue,
+    double MaxValue,
+    IReadOnlyList<GifPatternButton> Patterns);
+
+/// <summary>Кнопка под заголовком столбца: заполняет столбец значениями функции.</summary>
+public sealed record GifPatternButton(string ToolTip, Geometry Icon, System.Windows.Input.ICommand Command);

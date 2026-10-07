@@ -189,6 +189,41 @@
                                         TextAlignment="Center">
                                         <Run Text="{Binding MinValue, Mode=OneWay, StringFormat={}{0:0.##}}" /><Run Text=" … " /><Run Text="{Binding MaxValue, Mode=OneWay, StringFormat={}{0:0.##}}" />
                                     </TextBlock>
+
+                                    <!--  Заполнить весь столбец функцией (рост, спад, синусоида и т. д.)  -->
+                                    <ItemsControl
+                                        Margin="0,4,0,0"
+                                        HorizontalAlignment="Center"
+                                        IsEnabled="{Binding DataContext.IsNotBusy, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        ItemsSource="{Binding Patterns}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel HorizontalAlignment="Center" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button
+                                                    Width="26"
+                                                    Height="22"
+                                                    Margin="1"
+                                                    Command="{Binding Command}"
+                                                    Style="{StaticResource IconButton}"
+                                                    ToolTip="{Binding ToolTip}">
+                                                    <Path
+                                                        Width="14"
+                                                        Height="12"
+                                                        Data="{Binding Icon}"
+                                                        Stretch="Uniform"
+                                                        Stroke="{DynamicResource TextBrush}"
+                                                        StrokeEndLineCap="Round"
+                                                        StrokeLineJoin="Round"
+                                                        StrokeStartLineCap="Round"
+                                                        StrokeThickness="1.5" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                 </StackPanel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
