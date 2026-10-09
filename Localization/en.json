@@ -313,5 +313,19 @@
   "transformer.height_map.var.invert.name": "Invert (0 - no, 1 - yes)",
   "transformer.height_map.var.invert.description": "1 - swap the roles: dark cells are raised, bright cells are lowered.",
   "transformer.height_map.var.relief.name": "Relief height, % of cell size",
-  "transformer.height_map.var.relief.description": "How far raised cells stand out and lowered cells sink: side walls, volume and shadows. 0 - flat fill without relief."
+  "transformer.height_map.var.relief.description": "How far raised cells stand out and lowered cells sink: side walls, volume and shadows. 0 - flat fill without relief.",
+  "transformer.rubik_cube.name": "Rubik's cube",
+  "transformer.rubik_cube.description": "A 3x3 Rubik's cube stands in the center of the image, and instead of colored stickers its faces show image tiles shuffled like a puzzle. The top face is distorted a little, the side faces more. The camera can be moved away, tilted and rotated around the cube.",
+  "transformer.rubik_cube.var.distance.name": "Camera distance",
+  "transformer.rubik_cube.var.distance.description": "The larger the value, the farther the camera and the smaller the cube (perspective gets weaker). Small values give a close-up cube with strong distortion.",
+  "transformer.rubik_cube.var.elevation.name": "Camera tilt, °",
+  "transformer.rubik_cube.var.elevation.description": "0 - camera at cube level (the top face is not visible), 90 - straight top-down view. The larger the tilt, the better the top face is seen.",
+  "transformer.rubik_cube.var.rotation.name": "Cube rotation, °",
+  "transformer.rubik_cube.var.rotation.description": "Rotation of the cube about the vertical axis. Changes which side faces are visible and how strongly they are skewed.",
+  "transformer.rubik_cube.var.scramble.name": "Scramble, %",
+  "transformer.rubik_cube.var.scramble.description": "0 - solved cube, each face shows the whole image. 100 - tiles fully shuffled. Values in between move the tiles gradually.",
+  "transformer.rubik_cube.var.seed.name": "Scramble variant",
+  "transformer.rubik_cube.var.seed.description": "Number of the tile layout for the same scramble amount. A different number gives a different pattern on the faces.",
+  "transformer.rubik_cube.var.background.name": "Background brightness, %",
+  "transformer.rubik_cube.var.background.description": "Brightness of the original image around the cube. 100 - as is, 0 - black background."
 }

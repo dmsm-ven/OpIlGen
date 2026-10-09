@@ -124,6 +124,7 @@ public partial class App : Application
         services.AddSingleton<IImageTransformer, VoronoiStipplingTransformer>();
         services.AddSingleton<IImageTransformer, FlowFieldTransformer>();
         services.AddSingleton<IImageTransformer, HeightMapTransformer>();
+        services.AddSingleton<IImageTransformer, RubikCubeTransformer>();
     }
 
 

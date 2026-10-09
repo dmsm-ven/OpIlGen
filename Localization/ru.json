@@ -313,5 +313,19 @@
   "transformer.height_map.var.invert.name": "Инверсия (0 - нет, 1 - да)",
   "transformer.height_map.var.invert.description": "1 - поменять роли: тёмные ячейки поднимаются, светлые опускаются.",
   "transformer.height_map.var.relief.name": "Высота рельефа, % размера ячейки",
-  "transformer.height_map.var.relief.description": "Насколько поднятые ячейки выступают, а опущенные проваливаются: боковые стенки, объём и тени. 0 - плоская заливка без рельефа."
+  "transformer.height_map.var.relief.description": "Насколько поднятые ячейки выступают, а опущенные проваливаются: боковые стенки, объём и тени. 0 - плоская заливка без рельефа.",
+  "transformer.rubik_cube.name": "Кубик Рубика (rubik cube)",
+  "transformer.rubik_cube.description": "В центре изображения стоит кубик Рубика 3x3, а вместо цветных наклеек на его гранях плитки изображения, перемешанные как пазл. Верхняя грань искажена слабо, боковые сильнее. Камеру можно отодвигать, наклонять и вращать вокруг куба.",
+  "transformer.rubik_cube.var.distance.name": "Расстояние до камеры",
+  "transformer.rubik_cube.var.distance.description": "Чем больше значение, тем дальше камера и меньше кубик (перспектива при этом слабее). Малые значения - кубик крупным планом с сильными искажениями.",
+  "transformer.rubik_cube.var.elevation.name": "Наклон камеры, °",
+  "transformer.rubik_cube.var.elevation.description": "0 - камера на уровне куба (верхней грани не видно), 90 - вид строго сверху. Чем больше наклон, тем лучше видна верхняя грань.",
+  "transformer.rubik_cube.var.rotation.name": "Поворот куба, °",
+  "transformer.rubik_cube.var.rotation.description": "Поворот куба вокруг вертикальной оси. Меняет, какие боковые грани видны и как сильно они скошены.",
+  "transformer.rubik_cube.var.scramble.name": "Перемешивание, %",
+  "transformer.rubik_cube.var.scramble.description": "0 - собранный куб, на каждой грани целое изображение. 100 - плитки перемешаны полностью. Промежуточные значения сдвигают плитки постепенно.",
+  "transformer.rubik_cube.var.seed.name": "Вариант перемешивания",
+  "transformer.rubik_cube.var.seed.description": "Номер расположения плиток при одной и той же степени перемешивания. Другое число - другой рисунок на гранях.",
+  "transformer.rubik_cube.var.background.name": "Яркость фона, %",
+  "transformer.rubik_cube.var.background.description": "Яркость исходного изображения вокруг куба. 100 - как есть, 0 - чёрный фон."
 }
