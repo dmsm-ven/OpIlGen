@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -88,10 +89,29 @@ internal static class BitmapHelper
         return HistogramBins - 1;
     }
 
+    // Временный буфер размытия берётся из пула: на каждый кадр размывается по несколько карт,
+    // и новый массив в сотни килобайт на каждый вызов давал паузы сборщика мусора (LOH).
+    // Свой пул, потому что у ArrayPool.Shared потолок 1M элементов (хватает на ~1000x1000, но не на полноэкранный кадр).
+    private static readonly ArrayPool<float> BlurTempPool = ArrayPool<float>.Create(maxArrayLength: 1 << 23, maxArraysPerBucket: 8);
+
     /// <summary>Разделимое размытие «прямоугольником» (скользящая сумма, края повторяются).</summary>
     public static void BoxBlur(float[] data, int w, int h, int radius)
     {
-        var temp = new float[data.Length];
+        // Rent может вернуть массив длиннее нужного, а содержимое не обнулено: ниже temp полностью
+        // перезаписывается проходом по строкам до того, как будет прочитан проходом по столбцам.
+        var temp = BlurTempPool.Rent(data.Length);
+        try
+        {
+            BoxBlurCore(data, temp, w, h, radius);
+        }
+        finally
+        {
+            BlurTempPool.Return(temp);
+        }
+    }
+
+    private static void BoxBlurCore(float[] data, float[] temp, int w, int h, int radius)
+    {
         float size = radius * 2 + 1;
 
         for (int y = 0; y < h; y++)

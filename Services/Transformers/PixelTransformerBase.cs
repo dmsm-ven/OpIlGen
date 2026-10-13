@@ -7,8 +7,17 @@ namespace OpIlGen.Services.Transformers;
 /// Базовый класс для попиксельных преобразователей: читает Bgra32, сводит прозрачность к белому фону,
 /// вызывает <see cref="Process"/> и собирает результат обратно в BitmapSource.
 /// </summary>
-public abstract class PixelTransformerBase : IImageTransformer
+public abstract class PixelTransformerBase : IImageTransformer, IPixelBufferTransformer
 {
+    /// <summary>Подготовленные пиксели последнего исходного изображения (Bgra32, alpha = 255).</summary>
+    private sealed record PreparedInput(WeakReference<BitmapSource> Source, byte[] Pixels, int Width, int Height);
+
+    // Живой режим вызывает Transform десятки раз в секунду для одной и той же картинки: конвертация,
+    // копирование и сведение прозрачности каждый раз - чистая потеря времени. Кэш из одного элемента,
+    // подмена ссылки атомарна, поэтому вызов из нескольких потоков безопасен (в худшем случае
+    // подготовка выполнится дважды).
+    private volatile PreparedInput? _prepared;
+
     protected PixelTransformerBase(ILocalizationService localizer)
     {
         Localizer = localizer;
@@ -26,13 +35,48 @@ public abstract class PixelTransformerBase : IImageTransformer
 
     public BitmapSource Transform(BitmapSource source, TransformerVariable[]? customVariables = null)
     {
-        var pixels = BitmapHelper.ReadBgra32(source, out int width, out int height);
-        BitmapHelper.FlattenOnWhite(pixels);
-
-        var result = Process(pixels, width, height, customVariables);
+        var result = TransformToPixels(source, customVariables, out int width, out int height);
         return BitmapHelper.CreateBgra32(result, width, height, source);
     }
 
-    /// <summary>Получает пиксели Bgra32 (alpha = 255), возвращает пиксели того же размера.</summary>
+    public byte[] TransformToPixels(
+        BitmapSource source,
+        TransformerVariable[]? customVariables,
+        out int width,
+        out int height)
+    {
+        var input = GetPreparedInput(source);
+        width = input.Width;
+        height = input.Height;
+        return Process(input.Pixels, width, height, customVariables);
+    }
+
+    private PreparedInput GetPreparedInput(BitmapSource source)
+    {
+        var cached = _prepared;
+        if (cached is not null && cached.Source.TryGetTarget(out var cachedSource) && ReferenceEquals(cachedSource, source))
+        {
+            return cached;
+        }
+
+        var pixels = BitmapHelper.ReadBgra32(source, out int width, out int height);
+        BitmapHelper.FlattenOnWhite(pixels);
+        var prepared = new PreparedInput(new WeakReference<BitmapSource>(source), pixels, width, height);
+
+        // Кэшируем только неизменяемые изображения: у WriteableBitmap содержимое может поменяться
+        // при той же ссылке, и кэш выдал бы устаревшие пиксели.
+        if (source.IsFrozen)
+        {
+            _prepared = prepared;
+        }
+
+        return prepared;
+    }
+
+    /// <summary>
+    /// Получает пиксели Bgra32 (alpha = 255), возвращает пиксели того же размера.
+    /// Массив <paramref name="pixels"/> общий для всех кадров (кэш): его нельзя изменять и нельзя возвращать
+    /// как результат. Результат нужно писать в новый массив.
+    /// </summary>
     protected abstract byte[] Process(byte[] pixels, int width, int height, TransformerVariable[]? customVariables);
 }
